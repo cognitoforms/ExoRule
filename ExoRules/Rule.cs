@@ -24,22 +24,26 @@ namespace ExoRule
 		/// <param name="name"></param>
 		/// <param name="invocationTypes"></param>
 		/// <param name="predicates"></param>
-		internal Rule(string name, RuleInvocationType invocationTypes, string[] predicates, MethodBase action)
+		internal Rule(string name, RuleInvocationType invocationTypes, string[] predicates)
 		{
 			this.Name = name;
 			this.InvocationTypes = invocationTypes;
+			this.Predicates = predicates;
+		}
 
+		internal void Initialize(MethodBase action)
+		{
 			// Automatically detect predicates if not were specified
-			if (predicates == null && ((invocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
+			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
 			{
 				Assembly rootAssembly = action.GetParameters()[0].ParameterType.Assembly;
-				predicates = PredicateBuilder.GetPredicates(action,
+				Predicates = PredicateBuilder.GetPredicates(action,
 					(method) => method.DeclaringType.Assembly == rootAssembly).ToArray();
 			}
 
-			this.Predicates = predicates;
-			this.returnValues = predicates
-				.Where((predicate) => predicate.EndsWith(" return") )
+			// Determine the set of return values
+			this.returnValues = Predicates
+				.Where((predicate) => predicate.EndsWith(" return"))
 				.Select((predicate) => predicate.Substring(0, predicate.Length - 7))
 				.ToArray();
 		}
@@ -64,6 +68,53 @@ namespace ExoRule
 		/// </summary>
 		/// <returns></returns>
 		public abstract GraphType GetRootType();
+
+		/// <summary>
+		/// Gets all static rules defined on the specified types.
+		/// </summary>
+		/// <param name="types"></param>
+		/// <returns></returns>
+		public static IEnumerable<Rule> GetRules(Type[] types)
+		{
+			List<Rule> rules = new List<Rule>();
+			foreach (Type type in types)
+			{
+				rules.AddRange(
+					type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+						.Where(field => field.FieldType.IsSubclassOf(typeof(Rule)))
+						.Select(field =>
+						{
+							Rule rule = (Rule)field.GetValue(null);
+							if (rule.Name == null)
+								rule.Name = field.Name;
+							return rule; 
+						})
+				);
+			}
+			return rules;
+		}
+
+		/// <summary>
+		/// Registers all static rules defined on the specified types.
+		/// </summary>
+		/// <param name="types"></param>
+		/// <returns></returns>
+		public static void RegisterRules(Type[] types)
+		{
+			foreach (Rule rule in GetRules(types))
+				rule.Register();
+		}
+
+		/// <summary>
+		/// Registers all static rules defined on the types in the specified assembly.
+		/// </summary>
+		/// <param name="types"></param>
+		/// <returns></returns>
+		public static void RegisterRules(Assembly assembly)
+		{
+			foreach (Rule rule in GetRules(assembly.GetTypes()))
+				rule.Register();
+		}
 
 		/// <summary>
 		/// Invokes the rule on the specified <see cref="GraphInstance"/> as a result
@@ -175,8 +226,8 @@ namespace ExoRule
 
 	#endregion
 
-	#region Rule<T>
-	
+	#region Rule<TRoot>
+
 	/// <summary>
 	/// Concrete subclass of <see cref="Rule"/> that represents a rule for a specific root type.
 	/// </summary>
@@ -186,6 +237,29 @@ namespace ExoRule
 	{
 		string rootType;
 
+		public Rule(Action<TRoot> action)
+			: this(null, RuleInvocationType.PropertyChanged, null, null, action)
+		{ }
+
+		public Rule(RuleInvocationType invocationTypes, Action<TRoot> action)
+			: this(null, invocationTypes, null, null, action)
+		{ }
+
+		public Rule(RuleInvocationType invocationTypes, string[] predicates, Action<TRoot> action)
+			: this(null, invocationTypes, null, predicates, action)
+		{ }
+
+		public Rule(RuleInvocationType invocationTypes, string rootType, Action<TRoot> action)
+			: this(null, invocationTypes, rootType, null, action)
+		{ }
+
+		public Rule(RuleInvocationType invocationTypes, string rootType, string[] predicates, Action<TRoot> action)
+			: this(null, invocationTypes, rootType, predicates, action)
+		{
+			this.rootType = rootType;
+			this.Action = action;
+		}
+		
 		public Rule(string name, Action<TRoot> action)
 			: this(name, RuleInvocationType.PropertyChanged, null, null, action)
 		{ }
@@ -203,16 +277,32 @@ namespace ExoRule
 		{ }
 
 		public Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates, Action<TRoot> action)
-			: base(name, invocationTypes, predicates, action.Method)
+			: base(name, invocationTypes, predicates)
 		{
 			this.rootType = rootType;
-			this.Action = action;
+			Initialize(action);
+		}
+
+		internal Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates)
+			: base(name, invocationTypes, predicates)
+		{
+			this.rootType = rootType;
 		}
 
 		/// <summary>
 		/// Gets the action that will be performed when the rule is invoked.
 		/// </summary>
 		public Action<TRoot> Action { get; private set; }
+
+		/// <summary>
+		/// Sets the action for the current rule.
+		/// </summary>
+		/// <param name="action"></param>
+		internal void Initialize(Action<TRoot> action)
+		{
+			Action = action;
+			base.Initialize(action.Method);
+		}
 
 		/// <summary>
 		/// Gets the root <see cref="GraphType"/> for the current rule.
@@ -227,6 +317,13 @@ namespace ExoRule
 		}
 
 		/// <summary>
+		/// Converts <see cref="Action<TRoot>"/> into a corresponding <see cref="Rule<TRoot>"/> instance.
+		/// </summary>
+		public static implicit operator Rule<TRoot>(Delegate action)
+		{
+			return new Rule<TRoot>((Action<TRoot>)action);
+		}
+		/// <summary>
 		/// Invokes the action for the current rule on the specified <see cref="GraphInstance"/>.
 		/// </summary>
 		/// <param name="root"></param>
@@ -235,6 +332,28 @@ namespace ExoRule
 		{
 			Action((TRoot)root.Instance);
 		}
+	}
+
+	#endregion
+
+	#region Rule<TRule, TRoot>
+
+	/// <summary>
+	/// Concrete subclass of <see cref="Rule"/> that represents a rule for a specific root type.
+	/// </summary>
+	/// <typeparam name="TRule"></typeparam>
+	/// <typeparam name="TRoot"></typeparam>
+	public abstract class Rule<TRule, TRoot> : Rule<TRoot>
+		where TRule : Rule<TRule, TRoot>
+		where TRoot : class
+	{
+		protected Rule(RuleInvocationType invocationTypes, string rootType, string[] predicates)
+			: base(typeof(TRule).Name, invocationTypes, rootType, predicates)
+		{
+			Initialize(OnInvoke);
+		}
+
+		protected abstract void OnInvoke(TRoot root);
 	}
 
 	#endregion
