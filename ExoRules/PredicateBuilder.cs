@@ -62,8 +62,6 @@ namespace ExoRule
 				currentVertex = ConsolidateItemVertex(vertex, path);
 				if (currentVertex == null)
 					return;
-
-				path += "[i]";
 			}
 
 			bool pathAdded = false;
@@ -121,7 +119,7 @@ namespace ExoRule
 			}
 
 			if (!pathAdded || !isSetRule)
-				getPaths.Add(typeof(IList).IsAssignableFrom(collectionVertex.Type) ? path + "[i]" : path);
+				getPaths.Add(typeof(IList).IsAssignableFrom(collectionVertex.Type) ? path : path);
 
 			return null;
 		}
