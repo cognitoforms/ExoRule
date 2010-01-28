@@ -67,266 +67,267 @@ namespace ExoRule
 		}
 
 		#endregion
-	}
 
-	#endregion
-
-	#region Condition<T>
-
-	/// <summary>
-	/// Represents a condition that compares a specified value to a comparison value.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public abstract class Condition<T>
-		 where T : IComparable
-	{
-		/// <summary>
-		/// Determines whether the specified value is valid for this condition.
-		/// </summary>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		public abstract bool Evaluate(T value);
+		#region Condition<T>
 
 		/// <summary>
-		/// Gets the set of values represented by the condition.
+		/// Represents a condition that compares a specified value to a comparison value.
 		/// </summary>
-		public abstract T[] Values
+		/// <typeparam name="T"></typeparam>
+		public abstract class Condition<T>
+			 where T : IComparable
 		{
-			get;
-		}
+			/// <summary>
+			/// Determines whether the specified value is valid for this condition.
+			/// </summary>
+			/// <param name="value"></param>
+			/// <returns></returns>
+			public abstract bool Evaluate(T value);
 
-		/// <summary>
-		/// Automatically converts the condition to the underlying value to support
-		/// easy retrieval of the value of the condition.
-		/// </summary>
-		/// <param name="c"></param>
-		/// <returns></returns>
-		public static implicit operator T(Condition<T> c)
-		{
-			if (c.Values.Length > 0)
-				return c.Values[0];
-			return default(T);
-		}
-
-		#region True
-
-		public class True : Condition<T>
-		{
-			public override bool Evaluate(T value)
+			/// <summary>
+			/// Gets the set of values represented by the condition.
+			/// </summary>
+			public abstract T[] Values
 			{
-				return true;
+				get;
 			}
 
-			public override T[] Values
+			/// <summary>
+			/// Automatically converts the condition to the underlying value to support
+			/// easy retrieval of the value of the condition.
+			/// </summary>
+			/// <param name="c"></param>
+			/// <returns></returns>
+			public static implicit operator T(Condition<T> c)
 			{
-				get
+				if (c.Values.Length > 0)
+					return c.Values[0];
+				return default(T);
+			}
+
+			#region True
+
+			public class True : Condition<T>
+			{
+				public override bool Evaluate(T value)
 				{
-					return new T[] { };
+					return true;
 				}
-			}
-		}
 
-		#endregion
-
-		#region Composite
-
-		public abstract class Composite : Condition<T>
-		{
-			Condition<T>[] conditions;
-			T[] values;
-
-			public Composite(params Condition<T>[] conditions)
-			{
-				this.conditions = conditions;
-			}
-
-			public Condition<T>[] Conditions
-			{
-				get
+				public override T[] Values
 				{
-					return conditions;
+					get
+					{
+						return new T[] { };
+					}
 				}
 			}
 
-			public override T[] Values
+			#endregion
+
+			#region Composite
+
+			public abstract class Composite : Condition<T>
 			{
-				get
+				Condition<T>[] conditions;
+				T[] values;
+
+				public Composite(params Condition<T>[] conditions)
 				{
-					List<T> values = new List<T>();
-					foreach (Condition<T> condition in conditions)
-						values.AddRange(condition.Values);
-					return values.ToArray();
+					this.conditions = conditions;
 				}
-			}
-		}
 
-		#endregion
-
-		#region And
-
-		public class And : Composite
-		{
-			public And(params Condition<T>[] conditions)
-				: base(conditions)
-			{ }
-
-			public override bool Evaluate(T value)
-			{
-				foreach (Condition<T> condition in Conditions)
-					if (!condition.Evaluate(value))
-						return false;
-				return true;
-			}
-		}
-
-		#endregion
-
-		#region Or
-
-		public class Or : Composite
-		{
-			public Or(params Condition<T>[] conditions)
-				: base(conditions)
-			{ }
-
-			public override bool Evaluate(T value)
-			{
-				foreach (Condition<T> condition in Conditions)
-					if (condition.Evaluate(value))
-						return true;
-				return false;
-			}
-		}
-
-		#endregion
-
-		#region Relational
-
-		public abstract class Relational : Condition<T>
-		{
-			T value;
-			T[] values;
-
-			protected Relational(T value)
-			{
-				this.value = value;
-				this.values = new T[] { value };
-			}
-
-			public T Value
-			{
-				get
+				public Condition<T>[] Conditions
 				{
-					return value;
+					get
+					{
+						return conditions;
+					}
+				}
+
+				public override T[] Values
+				{
+					get
+					{
+						List<T> values = new List<T>();
+						foreach (Condition<T> condition in conditions)
+							values.AddRange(condition.Values);
+						return values.ToArray();
+					}
 				}
 			}
 
-			public override T[] Values
+			#endregion
+
+			#region And
+
+			public class And : Composite
 			{
-				get
+				public And(params Condition<T>[] conditions)
+					: base(conditions)
+				{ }
+
+				public override bool Evaluate(T value)
 				{
-					return values;
+					foreach (Condition<T> condition in Conditions)
+						if (!condition.Evaluate(value))
+							return false;
+					return true;
 				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region Equal
+			#region Or
 
-		public class Equal : Relational
-		{
-			public Equal(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public class Or : Composite
 			{
-				return ((IComparable)Value).CompareTo(value) == 0;
+				public Or(params Condition<T>[] conditions)
+					: base(conditions)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					foreach (Condition<T> condition in Conditions)
+						if (condition.Evaluate(value))
+							return true;
+					return false;
+				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region NotEqual
+			#region Relational
 
-		public class NotEqual : Relational
-		{
-			public NotEqual(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public abstract class Relational : Condition<T>
 			{
-				return ((IComparable)Value).CompareTo(value) != 0;
+				T value;
+				T[] values;
+
+				protected Relational(T value)
+				{
+					this.value = value;
+					this.values = new T[] { value };
+				}
+
+				public T Value
+				{
+					get
+					{
+						return value;
+					}
+				}
+
+				public override T[] Values
+				{
+					get
+					{
+						return values;
+					}
+				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region LessThan
+			#region Equal
 
-		public class LessThan : Relational
-		{
-			public LessThan(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public class Equal : Relational
 			{
-				return ((IComparable)Value).CompareTo(value) > 0;
+				public Equal(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) == 0;
+				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region LessThanEqual
+			#region NotEqual
 
-		public class LessThanEqual : Relational
-		{
-			public LessThanEqual(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public class NotEqual : Relational
 			{
-				return ((IComparable)Value).CompareTo(value) >= 0;
+				public NotEqual(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) != 0;
+				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region GreaterThan
+			#region LessThan
 
-		public class GreaterThan : Relational
-		{
-			public GreaterThan(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public class LessThan : Relational
 			{
-				return ((IComparable)Value).CompareTo(value) < 0;
+				public LessThan(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) > 0;
+				}
 			}
-		}
 
-		#endregion
+			#endregion
 
-		#region GreaterThanEqual
+			#region LessThanEqual
 
-		public class GreaterThanEqual : Relational
-		{
-			public GreaterThanEqual(T value)
-				: base(value)
-			{ }
-
-			public override bool Evaluate(T value)
+			public class LessThanEqual : Relational
 			{
-				return ((IComparable)Value).CompareTo(value) <= 0;
+				public LessThanEqual(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) >= 0;
+				}
 			}
+
+			#endregion
+
+			#region GreaterThan
+
+			public class GreaterThan : Relational
+			{
+				public GreaterThan(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) < 0;
+				}
+			}
+
+			#endregion
+
+			#region GreaterThanEqual
+
+			public class GreaterThanEqual : Relational
+			{
+				public GreaterThanEqual(T value)
+					: base(value)
+				{ }
+
+				public override bool Evaluate(T value)
+				{
+					return ((IComparable)Value).CompareTo(value) <= 0;
+				}
+			}
+
+			#endregion
 		}
 
 		#endregion
+
 	}
 
 	#endregion
