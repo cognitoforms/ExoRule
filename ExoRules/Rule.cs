@@ -387,7 +387,7 @@ namespace ExoRule
 		internal protected override void Invoke(GraphInstance root, GraphEvent graphEvent)
 		{
 			root.GetExtension<IRuleRoot>().Manager.GetState(this).IsPendingInvocation = false;
-			if(root is TRoot)
+			if(root.Instance is TRoot)
 				Action((TRoot)root.Instance);
 		}
 
