@@ -48,5 +48,10 @@ namespace ExoRule
 				ruleStates[rule] = state = new Rule.RuleState();
 			return state;
 		}
+
+		internal IEnumerable<Condition> GetConditions()
+		{
+			return conditions.Values.Select(target => target.Condition).Distinct();
+		}
 	}
 }

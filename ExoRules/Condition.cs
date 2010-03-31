@@ -59,6 +59,17 @@ namespace ExoRule
 		/// </summary>
 		public ConditionType Type { get; private set; }
 
+		/// <summary>
+		/// Gets the targets of the condition.
+		/// </summary>
+		public IEnumerable<ConditionTarget> Targets
+		{
+			get
+			{
+				return targets;
+			}
+		}
+
 		#endregion
 
 		#region Methods
@@ -157,6 +168,11 @@ namespace ExoRule
 							yield return child;
 				}
 			}
+		}
+
+		public static IEnumerable<Condition> GetConditions(GraphInstance instance)
+		{
+			return instance.GetExtension<IRuleRoot>().Manager.GetConditions();
 		}
 
 		/// <summary>
