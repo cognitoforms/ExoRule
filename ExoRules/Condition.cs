@@ -82,7 +82,7 @@ namespace ExoRule
 		public void AddTarget(object target, params string[] properties)
 		{
 			// Get the root target instance
-			GraphInstance root = GraphContext.Current.GetGraphInstance(target);
+			GraphInstance root = GraphContext.Current.GetGraphType(target).GetGraphInstance(target);
 
 			// Set the properties to an empty array if null
 			if (properties == null)

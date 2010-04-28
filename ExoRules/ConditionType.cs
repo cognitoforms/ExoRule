@@ -160,7 +160,7 @@ namespace ExoRule
 			if (conditionRule == null)
 				throw new NotSupportedException("The current condition type, " + Code + ", does not have an associated condition rule.");
 
-			conditionRule.Invoke(GraphContext.Current.GetGraphInstance(target), null);
+			conditionRule.Invoke(GraphContext.Current.GetGraphType(target).GetGraphInstance(target), null);
 		}
 
 		/// <summary>
@@ -183,7 +183,7 @@ namespace ExoRule
 		public Condition When(string message, object target, Func<bool> condition, params string[] properties)
 		{
 			// Convert the target into a rule root
-			IRuleRoot root = GraphContext.Current.GetGraphInstance(target).GetExtension<IRuleRoot>();
+			IRuleRoot root = GraphContext.Current.GetGraphType(target).GetGraphInstance(target).GetExtension<IRuleRoot>();
 
 			// Get the current condition if it exists
 			ConditionTarget conditionTarget = root.Manager.GetCondition(this);
