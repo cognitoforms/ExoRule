@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections;
 using ExoGraph;
+using System.Runtime.Serialization;
 
 namespace ExoRule
 {
@@ -14,6 +15,7 @@ namespace ExoRule
 	/// Abstract base class for all rule instances. Rules will either be instances
 	/// or subclasses of <see cref="Rule<T>"/> which inherits directly from <see cref="Rule"/>.
 	/// </summary>
+	[DataContract]
 	public abstract class Rule : IRuleProvider
 	{
 		#region Constructors

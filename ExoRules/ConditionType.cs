@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ExoGraph;
+using System.Runtime.Serialization;
 
 namespace ExoRule
 {
@@ -11,6 +12,11 @@ namespace ExoRule
 	/// causing an <see cref="Condition"/> to be raised.
 	/// </summary>
 	[Serializable]
+	[DataContract]
+	[KnownType(typeof(Warning))]
+	[KnownType(typeof(Error))]
+	[KnownType(typeof(Permission))]
+	[KnownType(typeof(DenyPermission))]
 	public abstract class ConditionType : IRuleProvider
 	{
 		#region Fields
@@ -21,8 +27,6 @@ namespace ExoRule
 
 		string code;
 		ConditionCategory category;
-		string message;
-		Rule conditionRule;
 
 		#endregion
 
@@ -31,20 +35,21 @@ namespace ExoRule
 		protected ConditionType(string message)
 		{
 			this.category = ConditionCategory.Error;
-			this.message = message;
+			this.Message = message;
 		}
 
 		protected ConditionType(string code, ConditionCategory category, string message)
 		{
 			this.Code = code;
 			this.category = category;
-			this.message = message;
+			this.Message = message;
 		}
 
 		#endregion
 
 		#region Properties
 
+		[DataMember(Name = "code")]
 		public string Code
 		{
 			get
@@ -81,13 +86,21 @@ namespace ExoRule
 			}
 		}
 
-		public string Message
+		[DataMember(Name = "category")]
+		string CategoryString
 		{
 			get
 			{
-				return message;
+				return Category.ToString();
 			}
+			set { }
 		}
+
+		[DataMember(Name = "message")]
+		public string Message { get; private set; }
+
+		[DataMember(Name = "rule")]
+		public Rule ConditionRule { get; set; }
 
 		#endregion
 
@@ -112,7 +125,7 @@ namespace ExoRule
 				properties = predicates;
 
 			// Create an condition rule based on the specified condition
-			this.conditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, root => When(root, () => condition(root), properties));
+			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, root => When(root, () => condition(root), properties));
 		}
 
 		public override string ToString()
@@ -157,10 +170,10 @@ namespace ExoRule
 		/// <returns></returns>
 		public void When(object target)
 		{
-			if (conditionRule == null)
+			if (ConditionRule == null)
 				throw new NotSupportedException("The current condition type, " + Code + ", does not have an associated condition rule.");
 
-			conditionRule.Invoke(GraphContext.Current.GetGraphType(target).GetGraphInstance(target), null);
+			ConditionRule.Invoke(GraphContext.Current.GetGraphType(target).GetGraphInstance(target), null);
 		}
 
 		/// <summary>
@@ -223,9 +236,9 @@ namespace ExoRule
 				this.Code = name;
 
 			// Return the condition rule if defined
-			if (conditionRule != null)
+			if (ConditionRule != null)
 			{
-				foreach (Rule rule in ((IRuleProvider)conditionRule).GetRules(name))
+				foreach (Rule rule in ((IRuleProvider)ConditionRule).GetRules(name))
 					yield return rule;
 			}
 		}

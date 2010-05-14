@@ -5,12 +5,11 @@ using System.Text;
 
 namespace ExoRule
 {
-	public enum ConditionCategory
+	public enum PermissionType
 	{
-		Unknown = 0,
-		Information = 1,
-		Warning = 2,
-		Error = 3,
-		Permission = 4
+		View = 0,
+		Edit = 1,
+		Delete = 2,
+		Custom = 3
 	}
 }

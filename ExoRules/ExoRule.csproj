@@ -46,6 +46,9 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Runtime.Serialization">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -60,6 +63,8 @@
     <Compile Include="Constraint.cs" />
     <Compile Include="IRuleProvider.cs" />
     <Compile Include="IRuleRoot.cs" />
+    <Compile Include="Permission.cs" />
+    <Compile Include="PermissionType.cs" />
     <Compile Include="PredicateBuilder.cs" />
     <Compile Include="Rule.cs" />
     <Compile Include="DecisionTable.cs" />
