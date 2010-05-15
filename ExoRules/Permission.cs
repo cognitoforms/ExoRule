@@ -19,6 +19,17 @@ namespace ExoRule
 			PermissionType = permissionType;
 		}
 
+
+		[DataMember(Name = "permissionType")]
+		string PermissionTypeString
+		{
+			get
+			{
+				return PermissionType.ToString();
+			}
+			set { }
+		}
+
 		public PermissionType PermissionType { get; private set; }
 
 		[DataMember(Name = "isAllowed")]
