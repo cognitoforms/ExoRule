@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConditionFilter.cs" />
+    <Compile Include="ConditionTypeSet.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="IRuleProvider.cs" />
     <Compile Include="IRuleRoot.cs" />

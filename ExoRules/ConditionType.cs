@@ -27,13 +27,15 @@ namespace ExoRule
 
 		string code;
 		ConditionCategory category;
+		ConditionTypeSet[] sets;
 
 		#endregion
 
 		#region Constructors
 
-		protected ConditionType(string message)
+		protected ConditionType(string message, params ConditionTypeSet[] sets)
 		{
+			this.sets = sets;
 			this.category = ConditionCategory.Error;
 			this.Message = message;
 		}
@@ -95,6 +97,26 @@ namespace ExoRule
 			}
 			set { }
 		}
+		
+		public ConditionTypeSet[] Sets
+		{
+			get
+			{
+				return sets;
+			}
+		}
+
+		[DataMember(Name = "sets")]
+		string[] SetsString
+		{
+			get
+			{
+				return sets == null ? null : sets.Select(s => s.Name).ToArray();
+			}
+			set { }
+		}
+
+
 
 		[DataMember(Name = "message")]
 		public string Message { get; private set; }
