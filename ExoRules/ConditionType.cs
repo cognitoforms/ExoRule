@@ -20,8 +20,10 @@ namespace ExoRule
 	public abstract class ConditionType : IRuleProvider
 	{
 		#region Fields
+		static IEnumerable<ConditionType> Empty = new List<ConditionType>();
 
 		static Dictionary<string, ConditionType> conditionTypes = new Dictionary<string, ConditionType>();
+		static Dictionary<string, List<ConditionType>> conditionTypesByGraphType = new Dictionary<string, List<ConditionType>>();
 		public static readonly Error DuplicateCodeError = "An error has already been defined with the same error code.";
 		public static readonly Error CodeChangeError = "The error code cannot be changed once it has been assigned to an error.";
 
@@ -33,15 +35,22 @@ namespace ExoRule
 
 		#region Constructors
 
-		protected ConditionType(string message, params ConditionTypeSet[] sets)
+		protected ConditionType(string message)
 		{
-			this.sets = sets;
 			this.category = ConditionCategory.Error;
 			this.Message = message;
 		}
 
 		protected ConditionType(string code, ConditionCategory category, string message)
 		{
+			this.Code = code;
+			this.category = category;
+			this.Message = message;
+		}
+
+		protected ConditionType(ConditionTypeSet[] sets, string code, ConditionCategory category, string message)
+		{
+			this.sets = sets;
 			this.Code = code;
 			this.category = category;
 			this.Message = message;
@@ -146,6 +155,18 @@ namespace ExoRule
 			if (properties == null)
 				properties = predicates;
 
+			// Remember which conditions are associated with this graph type
+			GraphType graphType = GraphContext.Current.GetGraphType(typeof(TRoot));
+			List<ConditionType> conditions;
+			if (!conditionTypesByGraphType.TryGetValue(graphType.Name, out conditions))
+			{
+				conditions = new List<ConditionType>();
+				conditionTypesByGraphType[graphType.Name] = conditions;
+			}
+
+			if(!conditions.Contains(this))
+				conditions.Add(this);
+
 			// Create an condition rule based on the specified condition
 			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, root => When(root, () => condition(root), properties));
 		}
@@ -243,6 +264,16 @@ namespace ExoRule
 			return null;
 		}
 
+		/// <summary>
+		/// Gets the condition types associated with this graph type
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		public static IEnumerable<ConditionType> GetForGraphType(GraphType type)
+		{
+			List<ConditionType> result;
+			return conditionTypesByGraphType.TryGetValue(type.Name, out result) ? result : ConditionType.Empty; 
+		}
 		#endregion
 
 		#region IRuleProvider Members

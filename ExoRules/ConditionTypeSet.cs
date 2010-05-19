@@ -20,6 +20,7 @@ namespace ExoRule
 		public ConditionTypeSet(string name)
 		{
 			sets.Add(name, this);
+			this.Name = name;
 		}
 		#endregion
 

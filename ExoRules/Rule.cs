@@ -196,6 +196,7 @@ namespace ExoRule
 	/// Concrete subclass of <see cref="Rule"/> that represents a rule for a specific root type.
 	/// </summary>
 	/// <typeparam name="TRoot"></typeparam>
+	[DataContract]
 	public class Rule<TRoot> : Rule
 			where TRoot : class
 	{
