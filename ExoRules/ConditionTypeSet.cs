@@ -31,5 +31,17 @@ namespace ExoRule
 		/// </summary>
 		public string Name { get; private set; }
 		#endregion
+
+		#region Methods
+		/// <summary>
+		/// Convert a string corresponding to a set name to a condition type set.
+		/// </summary>
+		public static implicit operator ConditionTypeSet(string name)
+		{
+			ConditionTypeSet set;
+			sets.TryGetValue(name, out set);
+			return set;
+		}
+		#endregion
 	}
 }
