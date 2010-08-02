@@ -64,6 +64,7 @@
     <Compile Include="Constraint.cs" />
     <Compile Include="IRuleProvider.cs" />
     <Compile Include="IRuleRoot.cs" />
+    <Compile Include="ISimpleEvent.cs" />
     <Compile Include="Permission.cs" />
     <Compile Include="PermissionType.cs" />
     <Compile Include="PredicateBuilder.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Error.cs" />
     <Compile Include="RuleInvocationType.cs" />
     <Compile Include="RuleManager.cs" />
+    <Compile Include="Subscribe.cs" />
     <Compile Include="Warning.cs" />
   </ItemGroup>
   <ItemGroup>
