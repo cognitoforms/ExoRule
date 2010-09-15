@@ -304,11 +304,14 @@ namespace ExoRule
 			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
 				Predicates = PredicateBuilder.GetPredicates(action.Method, method => Rule<TRoot>.PredicateFilter(action.Method, method)).ToArray();
 
-			// Determine the set of return values
-			this.returnValues = Predicates
-				.Where((predicate) => predicate.EndsWith(" return"))
-				.Select((predicate) => predicate.Substring(0, predicate.Length - 7))
-				.ToArray();
+            if (Predicates != null)
+            {
+                // Determine the set of return values
+                this.returnValues = Predicates
+                    .Where((predicate) => predicate.EndsWith(" return"))
+                    .Select((predicate) => predicate.Substring(0, predicate.Length - 7))
+                    .ToArray();
+            }
 		}
 
 		/// <summary>
