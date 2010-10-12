@@ -13,8 +13,12 @@ namespace ExoRule
 			: this(null, message)
 		{ }
 
-		public Warning(string code, string message)
-			: base(code, ConditionCategory.Warning, message)
+		public Warning(string code, string message, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Warning, message, sets)
+		{ }
+
+		public Warning(string code, string message, Type sourceType, Func<string, string> translator, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Warning, message, sourceType, translator, sets)
 		{ }
 
 		public static implicit operator Warning(string message)
@@ -26,11 +30,11 @@ namespace ExoRule
 	public class Warning<TRoot> : Warning
 		where TRoot : class
 	{
-		public Warning(string message, Predicate<TRoot> condition)
+		public Warning(string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
 			: this(null, message, condition)
 		{ }
 
-		public Warning(string code, string message, Predicate<TRoot> condition)
+		public Warning(string code, string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
 			: base(code, message)
 		{
 			CreateConditionRule<TRoot>(condition, null, null);

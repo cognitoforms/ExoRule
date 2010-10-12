@@ -2,390 +2,313 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ExoGraph;
 
 namespace ExoRule
 {
-	/// <summary>
-	/// Base class for types that provide a filtered view of conditions.
-	/// </summary>
-	public abstract class ConditionFilter
-	{
-		/*
-		RuleExceptionList exceptions;
-		bool hasPendingChanges;
+    ///// <summary>
+    ///// Provides a filtered view of conditions and raises events when the set of filtered conditions changes.
+    ///// </summary>
+    //public class ConditionFilter
+    //{
+    //    ConditionTypeSet conditionTypes;
+    //    GraphFilter graph;
 
-		/// <summary>
-		/// Creates a new filter and subscribes to changes to the context filter.
-		/// </summary>
-		/// <remarks>
-		/// Subclasses must call <see cref="Reset"/> in order to build the initial filter.
-		/// </remarks>
-		protected RuleExceptionFilter()
-		{ }
+    //    /// <summary>
+    //    /// Creates a new <see cref="RuleConditionGraphFilter"/> instance.
+    //    /// </summary>
+    //    /// <param name="graph"></param>
+    //    /// <param name="errors"></param>
+    //    public ConditionFilter(ConditionTypeSet conditionTypes, GraphFilter graph)
+    //    {
+    //        this.graph = graph;
+    //        this.conditionTypes = conditionTypes;
 
-		/// <summary>
-		/// Gets the list of exceptions exposed by this filter.
-		/// </summary>
-		public RuleExceptionList Exceptions
-		{
-			get
-			{
-				if (exceptions == null)
-					Reset();
-				return exceptions;
-			}
-		}
+    //        graph.Changed += graph_Changed;
+    //    }
 
-		/// <summary>
-		/// Notifies filter subscribers that the filtered exceptions have changed.
-		/// </summary>
-		public event ExceptionFilterChangedEventHandler Changed;
+    //    /// <summary>
+    //    /// Determines whether the specified condition should be included in the filter
+    //    /// based on whether the error is in the set of errors tracked by the filter and
+    //    /// the join points are on at least one object in the graph the filter is assigned to.
+    //    /// </summary>
+    //    /// <param name="condition"></param>
+    //    /// <returns></returns>
+    //    bool IncludeInFilter(Condition condition)
+    //    {
+    //        // First check the error list
+    //        if (!conditionTypes.ContainsKey(condition.Error))
+    //            return false;
 
-		/// <summary>
-		/// Processes changes to the context list of exceptions to determine if the exception should be included in the filter.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		void Exceptions_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			bool changed = false;
+    //        // Then check the graph
+    //        foreach (RuleConditionJoinPoint joinPoint in condition.JoinPoints)
+    //        {
+    //            if (joinPoint.ErrorObject is IRoot && graph.IsInGraph((IRoot)joinPoint.ErrorObject))
+    //                return true;
+    //        }
 
-			// Process added exceptions
-			if (e.NewItems != null)
-			{
-				foreach (Condition added in e.NewItems)
-				{
-					added.JoinPoints.CollectionChanged += new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
-					if (IncludeInFilter(added))
-					{
-						exceptions.Add(added);
-						changed = true;
-					}
-				}
-			}
+    //        // Otherwise, return false;
+    //        return false;
+    //    }
 
-			// Process removed exception
-			if (e.OldItems != null)
-			{
-				foreach (Condition removed in e.OldItems)
-				{
-					removed.JoinPoints.CollectionChanged -= new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
-					if (exceptions.Contains(removed))
-					{
-						exceptions.Remove(removed);
-						changed = true;
-					}
-				}
-			}
+    //    /// <summary>
+    //    /// Updates the condition filter based on changes to the object graph.
+    //    /// </summary>
+    //    /// <param name="sender"></param>
+    //    /// <param name="e"></param>
+    //    void graph_Changed(object sender, GraphFilterChangedEventArgs e)
+    //    {
+    //        Reset();
+    //    }
+        
+    //    List<Condition> conditions;
+    //    bool hasPendingChanges;
 
-			// Notify subscribers that the filter has changed.
-			if (changed)
-				OnChanged();
-		}
+    //    /// <summary>
+    //    /// Creates a new filter and subscribes to changes to the context filter.
+    //    /// </summary>
+    //    /// <remarks>
+    //    /// Subclasses must call <see cref="Reset"/> in order to build the initial filter.
+    //    /// </remarks>
+    //    protected ConditionFilter()
+    //    { }
 
-		/// <summary>
-		/// Evaluates whether an exception should be included in the filter due to changes to join points.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		void JoinPoints_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			Condition exception = null;
-			if (e.NewItems != null && e.NewItems.Count > 0)
-				exception = ((RuleExceptionJoinPoint)e.NewItems[0]).Exception;
-			if (e.OldItems != null && e.OldItems.Count > 0)
-				exception = ((RuleExceptionJoinPoint)e.OldItems[0]).Exception;
-			if (exception == null)
-				return;
+    //    /// <summary>
+    //    /// Gets the list of conditions exposed by this filter.
+    //    /// </summary>
+    //    public IEnumerable<Condition> Conditions
+    //    {
+    //        get
+    //        {
+    //            if (conditions == null)
+    //                Reset();
+    //            return conditions;
+    //        }
+    //    }
 
-			if (IncludeInFilter(exception))
-			{
-				if (!exceptions.Contains(exception))
-					exceptions.Add(exception);
-				OnChanged();
-			}
-			else
-			{
-				if (exceptions.Contains(exception))
-				{
-					exceptions.Remove(exception);
-					OnChanged();
-				}
-			}
-		}
+    //    /// <summary>
+    //    /// Notifies filter subscribers that the filtered conditions have changed.
+    //    /// </summary>
+    //    public event ConditionFilterChangedEventHandler Changed;
 
-		/// <summary>
-		/// Allows subclasses to evaluate whether an exception should be included in the list of filtered exceptions.
-		/// </summary>
-		/// <param name="exception"></param>
-		/// <returns></returns>
-		protected abstract bool IncludeInFilter(Condition exception);
+    //    /// <summary>
+    //    /// Processes changes to the context list of conditions to determine if the condition should be included in the filter.
+    //    /// </summary>
+    //    /// <param name="sender"></param>
+    //    /// <param name="e"></param>
+    //    void Conditions_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    //    {
+    //        bool changed = false;
 
-		/// <summary>
-		/// Resets the filter by clearing the exception list and reevaluating all exceptions
-		/// currently registered with the current context.
-		/// </summary>
-		protected void Reset()
-		{
-			// Initialize or clear the exception list
-			if (exceptions == null)
-			{
-				exceptions = new RuleExceptionList();
+    //        // Process added conditions
+    //        if (e.NewItems != null)
+    //        {
+    //            foreach (Condition added in e.NewItems)
+    //            {
+    //                added.JoinPoints.CollectionChanged += new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
+    //                if (IncludeInFilter(added))
+    //                {
+    //                    conditions.Add(added);
+    //                    changed = true;
+    //                }
+    //            }
+    //        }
 
-				// Subscribe to context exception changes
-				Context.Current.Exceptions.CollectionChanged += new NotifyCollectionChangedEventHandler(Exceptions_CollectionChanged);
-			}
-			else
-				exceptions.Clear();
+    //        // Process removed condition
+    //        if (e.OldItems != null)
+    //        {
+    //            foreach (Condition removed in e.OldItems)
+    //            {
+    //                removed.JoinPoints.CollectionChanged -= new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
+    //                if (conditions.Contains(removed))
+    //                {
+    //                    conditions.Remove(removed);
+    //                    changed = true;
+    //                }
+    //            }
+    //        }
 
-			// Process each exception in the context exception list to see if it should be included in the filter
-			foreach (Condition exception in Context.Current.Exceptions)
-			{
-				if (IncludeInFilter(exception))
-				{
-					exceptions.Add(exception);
-					exception.JoinPoints.CollectionChanged += new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
-				}
-			}
+    //        // Notify subscribers that the filter has changed.
+    //        if (changed)
+    //            OnChanged();
+    //    }
 
-			// Notify subscribers that the filter has changed
-			OnChanged();
-		}
+    //    /// <summary>
+    //    /// Evaluates whether an condition should be included in the filter due to changes to join points.
+    //    /// </summary>
+    //    /// <param name="sender"></param>
+    //    /// <param name="e"></param>
+    //    void JoinPoints_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    //    {
+    //        Condition condition = null;
+    //        if (e.NewItems != null && e.NewItems.Count > 0)
+    //            condition = ((RuleConditionJoinPoint)e.NewItems[0]).Condition;
+    //        if (e.OldItems != null && e.OldItems.Count > 0)
+    //            condition = ((RuleConditionJoinPoint)e.OldItems[0]).Condition;
+    //        if (condition == null)
+    //            return;
 
-		/// <summary>
-		/// Notify subscribers that the filtered list of exceptions has changed.
-		/// </summary>
-		void OnChanged()
-		{
-			// Exit immediately if change notifications are already pending
-			if (hasPendingChanges)
-				return;
+    //        if (IncludeInFilter(condition))
+    //        {
+    //            if (!conditions.Contains(condition))
+    //                conditions.Add(condition);
+    //            OnChanged();
+    //        }
+    //        else
+    //        {
+    //            if (conditions.Contains(condition))
+    //            {
+    //                conditions.Remove(condition);
+    //                OnChanged();
+    //            }
+    //        }
+    //    }
 
-			//Defer change notifications due to graph changes until they are complete
-			if (GraphChangeScope.Current.IsActive)
-			{
-				hasPendingChanges = true;
-				GraphChangeScope.Current.Exited += new GraphChangeScopeExitedHandler(scope_Exited);
-			}
+    //    /// <summary>
+    //    /// Allows subclasses to evaluate whether an condition should be included in the list of filtered conditions.
+    //    /// </summary>
+    //    /// <param name="condition"></param>
+    //    /// <returns></returns>
+    //    protected abstract bool IncludeInFilter(Condition condition);
 
-			// Otherwise, immediately raise the change event
-			else
-				RaiseOnChanged();
-		}
+    //    /// <summary>
+    //    /// Resets the filter by clearing the condition list and reevaluating all conditions
+    //    /// currently registered with the current context.
+    //    /// </summary>
+    //    protected void Reset()
+    //    {
+    //        // Initialize or clear the condition list
+    //        if (conditions == null)
+    //        {
+    //            conditions = new RuleConditionList();
 
-		/// <summary>
-		/// Raises deferred change notifications when the last graph change is complete.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		void scope_Exited(object sender, GraphChangeScopeExitedEventArgs e)
-		{
-			hasPendingChanges = false;
-			RaiseOnChanged();
-		}
+    //            // Subscribe to context condition changes
+    //            Context.Current.Conditions.CollectionChanged += new NotifyCollectionChangedEventHandler(Conditions_CollectionChanged);
+    //        }
+    //        else
+    //            conditions.Clear();
 
-		/// <summary>
-		/// Notify subscribers that the filtered list of exceptions has changed.
-		/// </summary>
-		void RaiseOnChanged()
-		{
-			if (Changed != null)
-				Changed(this, new ExceptionFilterChangedEventArgs(this));
-		}
+    //        // Process each condition in the context condition list to see if it should be included in the filter
+    //        foreach (Condition condition in Context.Current.Conditions)
+    //        {
+    //            if (IncludeInFilter(condition))
+    //            {
+    //                conditions.Add(condition);
+    //                condition.JoinPoints.CollectionChanged += new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
+    //            }
+    //        }
 
-		#region IDisposable Members
+    //        // Notify subscribers that the filter has changed
+    //        OnChanged();
+    //    }
 
-		/// <summary>
-		/// Called by <see cref="IDisposable.Dispose"/> to allow subclasses to perform cleanup.
-		/// </summary>
-		protected virtual void Dispose()
-		{ }
+    //    /// <summary>
+    //    /// Notify subscribers that the filtered list of conditions has changed.
+    //    /// </summary>
+    //    void OnChanged()
+    //    {
+    //        // Exit immediately if change notifications are already pending
+    //        if (hasPendingChanges)
+    //            return;
 
-		/// <summary>
-		/// Disposes of the filter and all object/event references
-		/// </summary>
-		void IDisposable.Dispose()
-		{
-			// Call the virtual dispose to allow subclasses to perform cleanup
-			this.Dispose();
+    //        //Defer change notifications due to graph changes until they are complete
+    //        if (GraphChangeScope.Current.IsActive)
+    //        {
+    //            hasPendingChanges = true;
+    //            GraphChangeScope.Current.Exited += new GraphChangeScopeExitedHandler(scope_Exited);
+    //        }
 
-			// Unsubscribe from exception changes
-			Context.Current.Exceptions.CollectionChanged += new NotifyCollectionChangedEventHandler(Exceptions_CollectionChanged);
-			foreach (Condition removed in exceptions)
-				removed.JoinPoints.CollectionChanged -= new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
-			exceptions = null;
-		}
+    //        // Otherwise, immediately raise the change event
+    //        else
+    //            RaiseOnChanged();
+    //    }
 
-		#endregion
-	}
+    //    /// <summary>
+    //    /// Raises deferred change notifications when the last graph change is complete.
+    //    /// </summary>
+    //    /// <param name="sender"></param>
+    //    /// <param name="e"></param>
+    //    void scope_Exited(object sender, GraphChangeScopeExitedEventArgs e)
+    //    {
+    //        hasPendingChanges = false;
+    //        RaiseOnChanged();
+    //    }
 
-	#endregion
+    //    /// <summary>
+    //    /// Notify subscribers that the filtered list of conditions has changed.
+    //    /// </summary>
+    //    void RaiseOnChanged()
+    //    {
+    //        if (Changed != null)
+    //            Changed(this, new ConditionFilterChangedEventArgs(this));
+    //    }
 
-	#region FilterChangedEvent
+    //    #region IDisposable Members
 
-	/// <summary>
-	/// Delegate that handles notifications when a filtered list of exceptions has changed.
-	/// </summary>
-	/// <param name="sender"></param>
-	/// <param name="e"></param>
-	public delegate void ExceptionFilterChangedEventHandler(object sender, ExceptionFilterChangedEventArgs e);
+    //    /// <summary>
+    //    /// Called by <see cref="IDisposable.Dispose"/> to allow subclasses to perform cleanup.
+    //    /// </summary>
+    //    protected virtual void Dispose()
+    //    { }
 
-	/// <summary>
-	/// Stores that arguments that are passed with the <see cref="RuleExceptionFilter.FilterChanged"/> event handler.
-	/// </summary>
-	public class ExceptionFilterChangedEventArgs : EventArgs
-	{
-		RuleExceptionFilter filter;
+    //    /// <summary>
+    //    /// Disposes of the filter and all object/event references
+    //    /// </summary>
+    //    void IDisposable.Dispose()
+    //    {
+    //        // Call the virtual dispose to allow subclasses to perform cleanup
+    //        this.Dispose();
 
-		/// <summary>
-		/// Creates a new argument instance for the specified filter.
-		/// </summary>
-		/// <param name="filter"></param>
-		internal ExceptionFilterChangedEventArgs(RuleExceptionFilter filter)
-		{
-			this.filter = filter;
-		}
+    //        // Unsubscribe from condition changes
+    //        Context.Current.Conditions.CollectionChanged += new NotifyCollectionChangedEventHandler(Conditions_CollectionChanged);
+    //        foreach (Condition removed in conditions)
+    //            removed.JoinPoints.CollectionChanged -= new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
+    //        conditions = null;
 
-		/// <summary>
-		/// Gets the filter that has changed.
-		/// </summary>
-		public RuleExceptionFilter Filter
-		{
-			get
-			{
-				return filter;
-			}
-		}
-	}
+    //        graph.Changed -= new GraphFilterChangedEventHandler(graph_Changed);
+    //    }
 
-	#endregion
+    //    #endregion
+    //}
 
-	#region RuleExceptionGraphFilter
+    //#endregion
 
-	/// <summary>
-	/// Filters the context-based exception list by exposing a specific set of errors that
-	/// have been joined to a specific set of objects in the graph.
-	/// </summary>
-	public class RuleExceptionGraphFilter : RuleExceptionFilter
-	{
-		GraphFilter graph;
-		Dictionary<ConditionType, ConditionType> errors = new Dictionary<ConditionType, ConditionType>();
+    //#region FilterChangedEvent
 
-		protected RuleExceptionGraphFilter()
-		{
-		}
+    ///// <summary>
+    ///// Delegate that handles notifications when a filtered list of conditions has changed.
+    ///// </summary>
+    ///// <param name="sender"></param>
+    ///// <param name="e"></param>
+    //public delegate void ConditionFilterChangedEventHandler(object sender, ConditionFilterChangedEventArgs e);
 
-		/// <summary>
-		/// Creates a new <see cref="RuleExceptionGraphFilter"/> instance.
-		/// </summary>
-		/// <param name="graph"></param>
-		/// <param name="errors"></param>
-		public RuleExceptionGraphFilter(GraphFilter graph, ConditionType[] errors)
-		{
-			this.graph = graph;
-			graph.Changed += new GraphFilterChangedEventHandler(graph_Changed);
-			foreach (ConditionType error in errors)
-			{
-				if (!this.errors.ContainsKey(error))
-					this.errors.Add(error, error);
-			}
-		}
+    ///// <summary>
+    ///// Stores that arguments that are passed with the <see cref="RuleConditionFilter.FilterChanged"/> event handler.
+    ///// </summary>
+    //public class ConditionFilterChangedEventArgs : EventArgs
+    //{
+    //    RuleConditionFilter filter;
 
-		protected GraphFilter Graph
-		{
-			get { return graph; }
-		}
+    //    /// <summary>
+    //    /// Creates a new argument instance for the specified filter.
+    //    /// </summary>
+    //    /// <param name="filter"></param>
+    //    internal ConditionFilterChangedEventArgs(RuleConditionFilter filter)
+    //    {
+    //        this.filter = filter;
+    //    }
 
-		/// <summary>
-		/// Determines whether the specified exception should be included in the filter
-		/// based on whether the error is in the set of errors tracked by the filter and
-		/// the join points are on at least one object in the graph the filter is assigned to.
-		/// </summary>
-		/// <param name="exception"></param>
-		/// <returns></returns>
-		protected override bool IncludeInFilter(Condition exception)
-		{
-			// First check the error list
-			if (!errors.ContainsKey(exception.Error))
-				return false;
+    //    /// <summary>
+    //    /// Gets the filter that has changed.
+    //    /// </summary>
+    //    public RuleConditionFilter Filter
+    //    {
+    //        get
+    //        {
+    //            return filter;
+    //        }
+    //    }
+    //}
 
-			// Then check the graph
-			foreach (RuleExceptionJoinPoint joinPoint in exception.JoinPoints)
-			{
-				if (joinPoint.ErrorObject is IRoot && graph.IsInGraph((IRoot)joinPoint.ErrorObject))
-					return true;
-			}
-
-			// Otherwise, return false;
-			return false;
-		}
-
-		/// <summary>
-		/// Updates the exception filter based on changes to the object graph.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		void graph_Changed(object sender, GraphFilterChangedEventArgs e)
-		{
-			Reset();
-		}
-
-		/// <summary>
-		/// Unsubscribes from the object graph change notifications.
-		/// </summary>
-		protected override void Dispose()
-		{
-			graph.Changed -= new GraphFilterChangedEventHandler(graph_Changed);
-			base.Dispose();
-		}
-	}
-
-	#endregion
-
-	#region RuleExceptionAllErrorsFilter
-
-	/// <summary>
-	/// Simple filter subclass that exposes all exceptions in the context-based exception list.
-	/// </summary>
-	public class RuleExceptionAllErrorsFilter : RuleExceptionFilter
-	{
-		protected override bool IncludeInFilter(Condition exception)
-		{
-			return true;
-		}
-	}
-
-	#endregion
-
-	#region RuleExceptionAllErrorsGraphFilter
-
-	/// <summary>
-	/// Simple filter subclass that exposes all exceptions in the context-based exception list that
-	/// have been joined to a specific set of objects in the graph.
-	/// </summary>
-	public class RuleExceptionAllErrorsGraphFilter : RuleExceptionGraphFilter
-	{
-		public RuleExceptionAllErrorsGraphFilter(GraphFilter graph)
-			: base(graph, new ConditionType[]{})
-		{
-		}
-
-		/// <summary>
-		/// Returns true if the exception is joined to one of the specific objects in the graph; otherwise
-		/// reutrns false.
-		/// </summary>
-		/// <param name="exception"></param>
-		/// <returns></returns>
-		protected override bool IncludeInFilter(Condition exception)
-		{
-			foreach (RuleExceptionJoinPoint joinPoint in exception.JoinPoints)
-			{
-				if (joinPoint.ErrorObject is IRoot && base.Graph.IsInGraph((IRoot)joinPoint.ErrorObject))
-					return true;
-			}
-
-			return false;
-		}
-		*/
-	}
+    //#endregion
 }

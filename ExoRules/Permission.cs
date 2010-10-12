@@ -9,16 +9,19 @@ namespace ExoRule
 	[DataContract]
 	public abstract class Permission : ConditionType
 	{
-		public Permission(string defaultMessage, PermissionType permissionType)
-			: this(null, defaultMessage, permissionType)
+		public Permission(string message, PermissionType permissionType, params ConditionTypeSet[] sets)
+			: this(null, message, permissionType, sets)
 		{ }
 
-		public Permission(string code, string defaultMessage, PermissionType permissionType)
-			: base(code, ConditionCategory.Permission, defaultMessage)
+		public Permission(string code, string message, PermissionType permissionType, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Permission, message, sets)
 		{
 			PermissionType = permissionType;
 		}
 
+		public Permission(string code, string message, Type sourceType, Func<string, string> translator, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Permission, message, sourceType, translator, sets)
+		{ }
 
 		[DataMember(Name = "permissionType")]
 		string PermissionTypeString
@@ -39,12 +42,12 @@ namespace ExoRule
 	[DataContract]
 	public class DenyPermission : Permission 
 	{
-		public DenyPermission(string defaultMessage, PermissionType permissionType)
-			: this(null, defaultMessage, permissionType)
+		public DenyPermission(string message, PermissionType permissionType)
+			: this(null, message, permissionType)
 		{ }
 
-		public DenyPermission(string code, string defaultMessage, PermissionType permissionType)
-			: base(code, defaultMessage, permissionType)
+		public DenyPermission(string code, string message, PermissionType permissionType)
+			: base(code, message, permissionType)
 		{ }
 
 		public override bool IsAllowed
@@ -61,12 +64,12 @@ namespace ExoRule
 	public class DenyPermission<TRoot> : DenyPermission
 		where TRoot : class
 	{
-		public DenyPermission(string defaultMessage, PermissionType permissionType, Predicate<TRoot> condition)
-			: this(null, defaultMessage, permissionType, condition)
+		public DenyPermission(string message, PermissionType permissionType, Predicate<TRoot> condition)
+			: this(null, message, permissionType, condition)
 		{ }
 
-		public DenyPermission(string code, string defaultMessage, PermissionType permissionType, Predicate<TRoot> condition)
-			: base(code, defaultMessage, permissionType)
+		public DenyPermission(string code, string message, PermissionType permissionType, Predicate<TRoot> condition)
+			: base(code, message, permissionType)
 		{
 			CreateConditionRule<TRoot>(condition, null, null);
 		}

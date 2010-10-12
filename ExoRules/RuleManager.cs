@@ -8,7 +8,7 @@ namespace ExoRule
 	/// <summary>
 	/// Tracks rule state for each <see cref="GraphInstance"/>.
 	/// </summary>
-	public class RuleManager
+	internal class RuleManager
 	{
 		Dictionary<Rule, Rule.RuleState> ruleStates = new Dictionary<Rule, Rule.RuleState>();
 		Dictionary<string, ConditionTarget> conditions = new Dictionary<string, ConditionTarget>();

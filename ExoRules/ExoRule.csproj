@@ -61,10 +61,9 @@
   <ItemGroup>
     <Compile Include="ConditionFilter.cs" />
     <Compile Include="ConditionTypeSet.cs" />
-    <Compile Include="Constraint.cs" />
+    <Compile Include="Event.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="IRuleProvider.cs" />
-    <Compile Include="IRuleRoot.cs" />
-    <Compile Include="ISimpleEvent.cs" />
     <Compile Include="Permission.cs" />
     <Compile Include="PermissionType.cs" />
     <Compile Include="PredicateBuilder.cs" />
@@ -78,9 +77,20 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Error.cs" />
+    <Compile Include="RuleExecutionLocation.cs" />
     <Compile Include="RuleInvocationType.cs" />
     <Compile Include="RuleManager.cs" />
-    <Compile Include="Subscribe.cs" />
+    <Compile Include="Validation\PathSource.cs" />
+    <Compile Include="Validation\PropertyRule.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Validation\StringLengthRule.cs" />
+    <Compile Include="Validation\RangeRule.cs" />
+    <Compile Include="Validation\CompareRule.cs" />
+    <Compile Include="Validation\AllowedValuesRule.cs" />
+    <Compile Include="Validation\RequiredRule.cs" />
+    <Compile Include="Validation\RequiredIfRule.cs" />
+    <Compile Include="Validation\CompareOperator.cs" />
     <Compile Include="Warning.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -88,6 +98,13 @@
       <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
       <Name>ExoGraph</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Validation\PropertyRule.resx">
+      <DependentUpon>PropertyRule.cs</DependentUpon>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>PropertyRule.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

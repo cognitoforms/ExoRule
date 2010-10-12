@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using ExoGraph;
 using System.Runtime.Serialization;
+using System.Resources;
 
 namespace ExoRule
 {
 	/// <summary>
-	/// Represents a discrete error that could occur within an application,
-	/// causing an <see cref="Condition"/> to be raised.
+	/// Represents a discrete type of condition that could occur within an application, 
+	/// such as a specific error, warning, status, permission, etc., that is information
+	/// relevant to an instance in a model, but not part of the domain data for the model.
 	/// </summary>
 	[Serializable]
 	[DataContract]
@@ -20,35 +22,48 @@ namespace ExoRule
 	public abstract class ConditionType : IRuleProvider
 	{
 		#region Fields
-		static IEnumerable<ConditionType> Empty = new List<ConditionType>();
 
+		static IEnumerable<ConditionType> Empty = new List<ConditionType>();
 		static Dictionary<string, ConditionType> conditionTypes = new Dictionary<string, ConditionType>();
 		static Dictionary<string, List<ConditionType>> conditionTypesByGraphType = new Dictionary<string, List<ConditionType>>();
-		public static readonly Error DuplicateCodeError = "An error has already been defined with the same error code.";
-		public static readonly Error CodeChangeError = "The error code cannot be changed once it has been assigned to an error.";
+		static Dictionary<Type, ResourceManager> resources = new Dictionary<Type, ResourceManager>();
 
 		string code;
+		string message;
 		ConditionCategory category;
 		ConditionTypeSet[] sets;
+		Func<string, string> translator;
 
 		#endregion
 
 		#region Constructors
 
-		protected ConditionType(string message)
+		protected ConditionType(string code, ConditionCategory category, string message, Type sourceType, Func<string, string> translator, params ConditionTypeSet[] sets)
+			: this(code, category, message, sets)
 		{
-			this.category = ConditionCategory.Error;
-			this.Message = message;
+			ResourceManager resource;
+			if (resources.TryGetValue(sourceType, out resource))
+			{
+				// Create a translator to first look up the resource
+				this.translator = (s) =>
+				{
+					// Look up the resource
+					s = resource.GetString(s) ?? s;
+
+					// Perform additional transation
+					if (translator != null)
+						s = translator(s);
+
+					// Return the translated string
+					return s;
+				};
+			}
+			else
+				this.translator = translator;
 		}
 
-		protected ConditionType(string code, ConditionCategory category, string message)
-		{
-			this.Code = code;
-			this.category = category;
-			this.Message = message;
-		}
 
-		protected ConditionType(ConditionTypeSet[] sets, string code, ConditionCategory category, string message)
+		protected ConditionType(string code, ConditionCategory category, string message, params ConditionTypeSet[] sets)
 		{
 			this.sets = sets;
 			this.Code = code;
@@ -71,7 +86,7 @@ namespace ExoRule
 			{
 				// The code cannot be changed once assigned
 				if (code != null)
-					throw (Exception)new Condition(CodeChangeError, null);
+					throw new InvalidOperationException("The code cannot be changed once it has been assigned to a condition type.");
 
 				// Ignore null codes
 				if (value == null)
@@ -82,7 +97,7 @@ namespace ExoRule
 
 				// Verify that the code has not already been assigned
 				if (conditionTypes.ContainsKey(code))
-					throw (Exception)new Condition(DuplicateCodeError, null);
+					throw new InvalidOperationException("A condition type has already been defined with the same code.");
 
 				// Register the condition type based on its unique code
 				conditionTypes.Add(code, this);
@@ -122,13 +137,24 @@ namespace ExoRule
 			{
 				return sets == null ? null : sets.Select(s => s.Name).ToArray();
 			}
-			set { }
+			set
+			{
+				sets = value.Select(s => (ConditionTypeSet)s).ToArray();
+			}
 		}
 
-
-
 		[DataMember(Name = "message")]
-		public string Message { get; private set; }
+		public string Message
+		{
+			get
+			{
+				return translator != null ? translator(message) : message;
+			}
+			private set
+			{
+				message = value;
+			}
+		}
 
 		[DataMember(Name = "rule")]
 		public Rule ConditionRule { get; set; }
@@ -168,7 +194,7 @@ namespace ExoRule
 				conditions.Add(this);
 
 			// Create an condition rule based on the specified condition
-			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, root => When(root, () => condition(root), properties));
+			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, graphType.Name, predicates, new ConditionType[] { this }, root => When(root, () => condition(root), properties));
 		}
 
 		public override string ToString()
@@ -238,11 +264,8 @@ namespace ExoRule
 		/// <param name="properties"></param>
 		public Condition When(string message, object target, Func<bool> condition, params string[] properties)
 		{
-			// Convert the target into a rule root
-			IRuleRoot root = GraphContext.Current.GetGraphType(target).GetGraphInstance(target).GetExtension<IRuleRoot>();
-
 			// Get the current condition if it exists
-			ConditionTarget conditionTarget = root.Manager.GetCondition(this);
+			ConditionTarget conditionTarget = GraphContext.Current.GetGraphInstance(target).GetExtension<RuleManager>().GetCondition(this);
 
 			// Add the condition on the target if it does not exist yet
 			if (condition())
@@ -265,15 +288,61 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Gets the condition types associated with this graph type
+		/// Gets condition types associated with rules that are registered for the specified <see cref="GraphType"/>.
 		/// </summary>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		public static IEnumerable<ConditionType> GetForGraphType(GraphType type)
+		public static IEnumerable<ConditionType> GetConditionTypes(GraphType type)
 		{
-			List<ConditionType> result;
-			return conditionTypesByGraphType.TryGetValue(type.Name, out result) ? result : ConditionType.Empty; 
+			return Rule.GetRegisteredRules(type).SelectMany(rule => rule.ConditionTypes).Distinct();
 		}
+
+		/// <summary>
+		/// Maps resources for the specified source types to the specified resource type,
+		/// which will cause all condition types tied to one of the mapped source types
+		/// to load resources using an alternate resource type.
+		/// </summary>
+		/// <param name="sourceTypes"></param>
+		/// <param name="resourceType"></param>
+		public static void MapResources(IEnumerable<Type> sourceTypes, Type resourceType)
+		{
+			ResourceManager resource;
+			if (!resources.TryGetValue(resourceType, out resource))
+				resources[resourceType] = resource = new ResourceManager(resourceType);
+			foreach (Type sourceType in sourceTypes)
+				resources[sourceType] = resource;
+		}
+
+		/// <summary>
+		/// Creates a translation based on the specified source type used for resource lookup
+		/// and the optional translation function.
+		/// </summary>
+		/// <param name="sourceType"></param>
+		/// <param name="translator"></param>
+		Func<string, string> GetTranslation(Type sourceType, Func<string, string> translator)
+		{
+			// First determine if resources have been mapped for the specified source type.
+			ResourceManager resource;
+			if (resources.TryGetValue(sourceType, out resource))
+			{
+				// Create a translator to first look up the resource
+				return (s) =>
+				{
+					// Look up the resource
+					s = resource.GetString(s) ?? s;
+
+					// Perform additional transation
+					if (translator != null)
+						s = translator(s);
+
+					// Return the translated string
+					return s;
+				};
+			}
+			else
+				return translator;
+		}
+
 		#endregion
 
 		#region IRuleProvider Members
@@ -282,16 +351,24 @@ namespace ExoRule
 		/// Returns the condition rule associated with the current condition type instance.
 		/// </summary>
 		/// <returns></returns>
-		IEnumerable<Rule> IRuleProvider.GetRules(string name)
+		IEnumerable<Rule> IRuleProvider.GetRules(Type sourceType, string name)
 		{
-			// Initialize the name of the rule if it has not already been set
+			// Initialize resource translation support if a translator has not been assigned
+			if (this.translator == null)
+			{
+				ResourceManager resource;
+				if (resources.TryGetValue(sourceType, out resource))
+					this.translator = (s) => resource.GetString(s) ?? s;
+			}
+
+			// Initialize the code of the condition type if it has not already been set
 			if (this.Code == null)
-				this.Code = name;
+				this.Code = sourceType.Name + "." + name;
 
 			// Return the condition rule if defined
 			if (ConditionRule != null)
 			{
-				foreach (Rule rule in ((IRuleProvider)ConditionRule).GetRules(name))
+				foreach (Rule rule in ((IRuleProvider)ConditionRule).GetRules(sourceType, name))
 					yield return rule;
 			}
 		}

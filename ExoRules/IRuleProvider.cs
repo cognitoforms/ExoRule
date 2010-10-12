@@ -11,6 +11,6 @@ namespace ExoRule
 	/// </summary>
 	public interface IRuleProvider
 	{
-		IEnumerable<Rule> GetRules(string name);
+		IEnumerable<Rule> GetRules(Type sourceType, string name);
 	}
 }

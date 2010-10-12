@@ -9,21 +9,21 @@ namespace ExoRule
 	[DataContract]
 	public class Error : ConditionType
 	{
-		public Error(string defaultMessage)
-			: this(null, defaultMessage)
+		public Error(string message)
+			: this(null, message)
 		{ }
 
-		public Error(string code, string defaultMessage)
-			: base(code, ConditionCategory.Error, defaultMessage)
+		public Error(string code, string message, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Error, message, sets)
 		{ }
 
-		public Error(ConditionTypeSet[] sets, string code, string defaultMessage)
-			: base(sets, code, ConditionCategory.Error, defaultMessage)
+		public Error(string code, string message, Type sourceType, Func<string, string> translator, params ConditionTypeSet[] sets)
+			: base(code, ConditionCategory.Error, message, sourceType, translator, sets)
 		{ }
 
-		public static implicit operator Error(string defaultMessage)
+		public static implicit operator Error(string message)
 		{
-			return new Error(defaultMessage);
+			return new Error(message);
 		}
 	}
 
@@ -34,67 +34,22 @@ namespace ExoRule
 		/// <summary>
 		/// Creates a new error and rule
 		/// </summary>
-		/// <param name="defaultMessage">Message describing the error</param>
+		/// <param name="message">Message describing the error</param>
 		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
-		public Error(string defaultMessage, Predicate<TRoot> condition)
-			: this((ConditionTypeSet[])null, null, defaultMessage, condition)
-		{ }
-
-		/// <summary>
-		/// Creates a new error and rule
-		/// </summary>
-		/// <param name="set">The ConditionTypeSet the rule is associated with</param>
-		/// <param name="defaultMessage">Message describing the error</param>
-		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
-		public Error(ConditionTypeSet set, string defaultMessage, Predicate<TRoot> condition)
-			: this(new ConditionTypeSet[] {set}, null, defaultMessage, condition)
-		{ }
-
-		/// <summary>
-		/// Creates a new error and rule
-		/// </summary>
-		/// <param name="sets">The list of ConditionTypeSets the rule is associated with</param>
-		/// <param name="defaultMessage">Message describing the error</param>
-		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
-		public Error(ConditionTypeSet[] sets, string defaultMessage, Predicate<TRoot> condition)
-			: this(sets, null, defaultMessage, condition)
+		/// <param name="sets">The list of <see cref="ConditionTypeSet"/> instances the rule is associated with</param>
+		public Error(string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
+			: this(null, message, condition, sets)
 		{ }
 
 		/// <summary>
 		/// Creates a new error and rule
 		/// </summary>
 		/// <param name="code">Unique code for the condition type</param>
-		/// <param name="defaultMessage">Message describing the error</param>
+		/// <param name="message">Message describing the error</param>
 		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
 		/// <summary>
-		public Error(string code, string defaultMessage, Predicate<TRoot> condition)
-			: this((ConditionTypeSet[])null, code, defaultMessage, condition)
-		{
-		}
-
-		/// <summary>
-		/// Creates a new error and rule
-		/// </summary>
-		/// <param name="set">The ConditionTypeSet the rule is associated with</param>
-		/// <param name="code">Unique code for the condition type</param>
-		/// <param name="defaultMessage">Message describing the error</param>
-		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
-		/// <summary>
-		public Error(ConditionTypeSet set, string code, string defaultMessage, Predicate<TRoot> condition)
-			: this(new ConditionTypeSet[] { set }, code, defaultMessage, condition)
-		{
-		}
-
-		/// <summary>
-		/// Creates a new error and rule
-		/// </summary>
-		/// <param name="sets">The list of ConditionTypeSets the rule is associated with</param>
-		/// <param name="code">Unique code for the condition type</param>
-		/// <param name="defaultMessage">Message describing the error</param>
-		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
-		/// <summary>
-		public Error(ConditionTypeSet[] sets, string code, string defaultMessage, Predicate<TRoot> condition)
-			: base(sets, code, defaultMessage)
+		public Error(string code, string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
+			: base(code, message, sets)
 		{
 			CreateConditionRule<TRoot>(condition, null, null);
 		}

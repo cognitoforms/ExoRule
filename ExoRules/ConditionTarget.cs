@@ -19,7 +19,7 @@ namespace ExoRule
 			this.Condition = condition;
 			this.target = new WeakReference(target);
 			this.properties = properties;
-			target.GetExtension<IRuleRoot>().Manager.SetCondition(this);
+			target.GetExtension<RuleManager>().SetCondition(this);
 		}
 
 		public Condition Condition { get; private set; }

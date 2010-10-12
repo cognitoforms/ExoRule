@@ -331,4 +331,20 @@ namespace ExoRule
 	}
 
 	#endregion
+
+	//public class Decision<TDecision, C1, C2, C3>
+	//    where TDecision : Decision<TDecision, C1, C2, C3>
+	//{
+	//    List<TDecision> decisions;
+
+	//    protected static void AddDecision(Predicate<C1> p1, Predicate<P2> p2, Predicate<P3> p3)
+	//    {
+
+	//    }
+
+	//    public static TDecision GetDecision(C1? c1, C2? c2, C3? c3)
+	//    {
+	//        return null;
+	//    }
+	//}
 }

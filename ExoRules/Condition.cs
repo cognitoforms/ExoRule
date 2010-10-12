@@ -82,97 +82,73 @@ namespace ExoRule
 		public void AddTarget(object target, params string[] properties)
 		{
 			// Get the root target instance
-			GraphInstance root = GraphContext.Current.GetGraphType(target).GetGraphInstance(target);
+			GraphInstance root = GraphContext.Current.GetGraphInstance(target);
 
 			// Set the properties to an empty array if null
 			if (properties == null)
 				properties = new string[0];
 
 			// Create a single condition target if the specified proeprties are all on the root
-			if (properties.Length == 0 || properties.FirstOrDefault(property => property.Contains('.')) == null)
+			if (!properties.Any(property => property.Contains('.')))
 				targets.Add(new ConditionTarget(this, root, properties));
 
 			// Otherwise, process the property paths to create the necessary sources
 			else
-			{
-				// Create a dictionary of condition sources
-				Dictionary<string, List<ConditionTarget>> paths = new Dictionary<string, List<ConditionTarget>>();
-				
+			{			
 				// Process each property path to build up the condition sources
 				foreach (string property in properties)
 				{
-					string[] steps = property.Split('.');
-					string leafProperty = steps[steps.Length - 1];
-					string sourcePath = steps.Length < 2 ? "" : property.Substring(0, property.Length - leafProperty.Length - 1);
-					
-					// Create the list of condition sources for the current path
-					List<ConditionTarget> pathTargets;
-					if (!paths.TryGetValue(sourcePath, out pathTargets))
-						paths[sourcePath] = pathTargets =
-							GetInstances(steps, 0, new GraphInstance[] { root })
-							.Select(instance => 
+					IEnumerable<GraphInstance> instances = new GraphInstance[] { root };
+					foreach (var step in property.Split('.'))
+					{
+						// Create condition targets for all instances for the current step along the path
+						foreach (GraphInstance instance in instances)
+						{
+							ConditionTarget conditionTarget = targets.FirstOrDefault(ct => ct.Target == instance);
+							if (conditionTarget == null)
 							{
-								ConditionTarget conditionTarget = new ConditionTarget(this, instance, leafProperty);
+								conditionTarget = new ConditionTarget(this, instance, step);
 								targets.Add(conditionTarget);
-								return conditionTarget;
-							})
-							.ToList();
+							}
+							else
+								conditionTarget.AddProperty(step);
+						}
 
-					// Otherwise, add the leaf property to the existing condition sources for the current path
-					else
-						foreach (ConditionTarget pathTarget in pathTargets)
-							pathTarget.AddProperty(leafProperty);
+						// Cache the current step to make the closure work (.NET bug?)
+						string currentStep = step;
+
+						// Move down the path by getting the set of child instances
+						instances = instances.SelectMany<GraphInstance, GraphInstance>(instance =>
+						{
+							// Get the reference property for the current step
+							GraphReferenceProperty reference = instance.Type.Properties[currentStep] as GraphReferenceProperty;
+
+							// Return no instances if a reference property with the specified name could not be found
+							if (reference == null)
+								return new GraphInstance[0];
+
+							// Get the list of child instances for the current step
+							if (reference.IsList)
+								return instance.GetList(reference);
+							else
+							{
+								GraphInstance child = instance.GetReference(reference);
+								return child == null ? new GraphInstance[0] : new GraphInstance[] { child };
+							}
+						});
+					}
 				}
 			}
 		}
 
 		/// <summary>
-		/// Recursively loads the instances at the end of a property path.
+		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="GraphInstance"/>.
 		/// </summary>
-		/// <param name="steps"></param>
-		/// <param name="step"></param>
-		/// <param name="parents"></param>
+		/// <param name="instance"></param>
 		/// <returns></returns>
-		IEnumerable<GraphInstance> GetInstances(string[] steps, int step, IEnumerable<GraphInstance> parents)
-		{
-			// If there is only one step, just return the root that was passed in
-			if (steps.Length == 1)
-				yield return parents.First();
-
-			// Otherwise, recursively process the path to return the leaf instances
-			else
-			{
-				// Process each parent instance
-				foreach (GraphInstance parent in parents)
-				{
-					GraphReferenceProperty property = parent.Type.Properties[steps[step]] as GraphReferenceProperty;
-					if (property == null)
-						continue;
-
-					// Get the list of child instances for the current step
-					IEnumerable<GraphInstance> children = null;
-					if (property.IsList)
-						children = parent.GetList(property);
-					else
-					{
-						GraphInstance child = parent.GetReference((GraphReferenceProperty)property);
-						children = child == null ? new GraphInstance[] { } : new GraphInstance[] { child };
-					}
-
-					// Either recurse to the end of the path or return the requested instances
-					if (step == steps.Length - 2)
-						foreach (GraphInstance child in children)
-							yield return child;
-					else
-						foreach (GraphInstance child in GetInstances(steps, step + 1, children))
-							yield return child;
-				}
-			}
-		}
-
 		public static IEnumerable<Condition> GetConditions(GraphInstance instance)
 		{
-			return instance.GetExtension<IRuleRoot>().Manager.GetConditions();
+			return instance.GetExtension<RuleManager>().GetConditions();
 		}
 
 		/// <summary>
@@ -181,7 +157,7 @@ namespace ExoRule
 		internal void Destroy()
 		{
 			foreach (ConditionTarget conditionTarget in targets)
-				conditionTarget.Target.GetExtension<IRuleRoot>().Manager.ClearCondition(conditionTarget.Condition.Type);
+				conditionTarget.Target.GetExtension<RuleManager>().ClearCondition(conditionTarget.Condition.Type);
 			targets.Clear();
 		}
 
