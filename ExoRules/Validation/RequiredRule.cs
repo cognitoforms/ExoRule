@@ -19,23 +19,27 @@ namespace ExoRule.Validation
 	{
 		#region Constructors
 
-		public RequiredRule(string rootType, string property, Func<string> label)
-			: this(rootType, property, label, RuleInvocationType.PropertyChanged)
+		public RequiredRule(string rootType, string property, Func<string> label, params ConditionTypeSet[] sets)
+			: this(rootType, property, CreateError(rootType, property, label, sets))
 		{ }
 
-		protected RequiredRule(string rootType, string property, Func<string> label, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, label), invocationTypes, property)
+		public RequiredRule(string rootType, string property, Error error)
+			: this(rootType, property, RuleInvocationType.PropertyChanged, error)
+		{ }
+
+		protected RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error)
+			: base(rootType, property, error, invocationTypes, property)
 		{ }
 
 		#endregion
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, Func<string> label)
+		static Error CreateError(string rootType, string property, Func<string> label, params ConditionTypeSet[] sets)
 		{
 			return new Error(
 				GetErrorCode(rootType, property, "Required"),
-				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", label()), null);
+				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", label()), sets);
 		}
 
 		/// <summary>

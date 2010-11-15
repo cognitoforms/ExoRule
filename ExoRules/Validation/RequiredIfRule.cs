@@ -21,21 +21,26 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format)
-			: this(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, RuleInvocationType.PropertyChanged)
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, RuleInvocationType.PropertyChanged, sets)
 		{ }
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, RuleInvocationType invocationTypes)
-			: base(rootType, property, 
-				CreateError(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format), 
-				invocationTypes, 
-				CompareRule.GetPredicates(rootType, property, compareSource))
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error)
+			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged, error)
+		{ }
+
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, invocationTypes,
+				CreateError(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, sets))
+		{ }
+
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, Error error)
+			: base(rootType, property, error, invocationTypes, CompareRule.GetPredicates(rootType, property, compareSource))
 		{
 			this.CompareSource = compareSource;
 			this.CompareOperator = compareOperator;
 			this.CompareValue = compareValue;
 		}
-
 		#endregion
 
 		#region Properties
@@ -106,7 +111,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format)
+		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, params ConditionTypeSet[] sets)
 		{
 			// Determine the appropriate error message
 			string message;
@@ -146,7 +151,7 @@ namespace ExoRule.Validation
 				(s) => s
 					.Replace("{property}", label())
 					.Replace("{compareSource}", compareLabel())
-					.Replace("{compareValue}", compareValue == null ? "" : format(compareValue)));
+					.Replace("{compareValue}", compareValue == null ? "" : format(compareValue)), sets);
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)
