@@ -16,29 +16,19 @@ namespace ExoRule
 
 		internal ConditionTarget GetCondition(ConditionType error)
 		{
-			return GetCondition(error, error.Message);
-		}
-
-		internal ConditionTarget GetCondition(ConditionType error, string message)
-		{
 			ConditionTarget condition;
-			conditions.TryGetValue(error.Code + "|" + message, out condition);
+			conditions.TryGetValue(error.Code, out condition);
 			return condition;
 		}
 
 		internal void SetCondition(ConditionTarget conditionTarget)
 		{
-			conditions[conditionTarget.Condition.Type.Code + "|" + conditionTarget.Condition.Message] = conditionTarget;
+			conditions[conditionTarget.Condition.Type.Code] = conditionTarget;
 		}
 
 		internal void ClearCondition(ConditionType error)
 		{
-			ClearCondition(error, error.Message);
-		}
-
-		internal void ClearCondition(ConditionType error, string message)
-		{
-			conditions.Remove(error.Code + "|" + message);
+			conditions.Remove(error.Code);
 		}
 
 		internal Rule.RuleState GetState(Rule rule)
