@@ -89,8 +89,40 @@ namespace ExoRule.DataAnnotations
 		Func<T, string> GetFormat<T>(GraphProperty property)
 		{
 			DisplayFormatAttribute formatAttribute = property.GetAttributes<DisplayFormatAttribute>().FirstOrDefault();
-			return formatAttribute != null && !String.IsNullOrWhiteSpace(formatAttribute.DataFormatString) ?
-				(Func<T, string>)((v) => formatAttribute.DataFormatString) : (v) => v.ToString();
+			string formatCode = string.Empty;
+
+			if (formatAttribute != null && !string.IsNullOrWhiteSpace(formatAttribute.DataFormatString))
+			{
+				string formatString = formatAttribute.DataFormatString;
+
+				// Check for a named format
+				switch (formatAttribute.DataFormatString)
+				{
+					case "Currency":
+						formatCode = "{0:C}";
+						break;
+					case "Percent":
+						formatCode = "{0:P}";
+						break;
+					case "ShortDate":
+						formatCode = "{0:d}";
+						break;
+					case "LongDate":
+						formatCode = "{0:D}";
+						break;
+					case "ShortTime":
+						formatCode = "{0:t}";
+						break;
+					case "LongTime":
+						formatCode = "{0:T}";
+						break;
+					default:
+						formatCode = formatString;
+						break;
+				}				
+			}
+
+			return (Func<T, string>)((v) => string.Format(formatCode, v));
 		}
 
 		/// <summary>
