@@ -31,6 +31,16 @@ namespace ExoRule
 		/// </summary>
 		/// <param name="rootType">The root <see cref="GraphType"/> the rule is for</param>
 		/// <param name="name"></param>
+		/// <param name="predicates"></param>
+		public Rule(string rootType, string name, params string[] predicates)
+			: this(rootType, name, predicates != null && predicates.Length > 0 ? RuleInvocationType.PropertyChanged : 0, null, predicates)
+		{ }
+
+		/// <summary>
+		/// Creates a new rule instance.
+		/// </summary>
+		/// <param name="rootType">The root <see cref="GraphType"/> the rule is for</param>
+		/// <param name="name"></param>
 		/// <param name="invocationTypes"></param>
 		/// <param name="predicates"></param>
 		public Rule(string rootType, string name, RuleInvocationType invocationTypes, params string[] predicates)
@@ -290,7 +300,7 @@ namespace ExoRule
 		/// <summary>
 		/// Allows subclasses to perform additional registration logic.
 		/// </summary>
-		internal virtual void OnRegister()
+		protected internal virtual void OnRegister()
 		{ }
 
 		#endregion
@@ -520,7 +530,7 @@ namespace ExoRule
 		/// <summary>
 		/// Registers a named event on the root type for the current event rule.
 		/// </summary>
-		internal override void OnRegister()
+		protected internal override void OnRegister()
 		{
 			base.OnRegister();
 

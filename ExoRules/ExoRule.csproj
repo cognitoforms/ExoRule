@@ -78,6 +78,7 @@
     </Compile>
     <Compile Include="Error.cs" />
     <Compile Include="RuleExecutionLocation.cs" />
+    <Compile Include="RuleProvider.cs" />
     <Compile Include="RuleInvocationType.cs" />
     <Compile Include="RuleManager.cs" />
     <Compile Include="Validation\PathSource.cs" />
