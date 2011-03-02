@@ -374,6 +374,10 @@ namespace ExoRule
 			: this(null, invocationTypes, null, predicates, action)
 		{ }
 
+		public Rule(RuleInvocationType invocationTypes, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
+			: this(null, invocationTypes, null, predicates, conditionTypes, action)
+		{ }
+
 		public Rule(RuleInvocationType invocationTypes, string rootType, Action<TRoot> action)
 			: this(null, invocationTypes, rootType, null, action)
 		{ }
