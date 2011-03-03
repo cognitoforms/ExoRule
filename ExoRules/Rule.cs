@@ -285,8 +285,11 @@ namespace ExoRule
 							GraphEventScope.OnExit(() => 
 							{
 								// Only invoke the rule if the instance is of the same type as the rule root type
-								if (RootType.IsInstanceOfType(e.Instance)) 
-									Invoke(e.Instance, e); 
+                                if (RootType.IsInstanceOfType(e.Instance))
+                                {
+                                    state.IsPendingInvocation = false;
+                                    Invoke(e.Instance, e);
+                                }
 							});
 						}
 					};
@@ -471,7 +474,6 @@ namespace ExoRule
 		/// <param name="graphEvent"></param>
 		internal protected override void Invoke(GraphInstance root, GraphEvent graphEvent)
 		{
-			root.GetExtension<RuleManager>().GetState(this).IsPendingInvocation = false;
 			Action((TRoot)root.Instance);
 		}
 
