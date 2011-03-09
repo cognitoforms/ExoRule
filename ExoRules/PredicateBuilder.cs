@@ -41,11 +41,10 @@ namespace ExoRule
 				if (value.Length > root.Name.Length + 2)
 				{
 					value = value.Substring(root.Name.Length + 2);
-					returnValue.Add(isSetRule ? value + " lazy" : value);
+					returnValue.Add(value);
 				}
 			}
 
-			if (isSetRule)
 				foreach (string predicate in setPaths)
 					if (predicate.Length > root.Name.Length + 2)
 						returnValue.Add(predicate.Substring(root.Name.Length + 2) + " return");
