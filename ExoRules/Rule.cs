@@ -180,7 +180,7 @@ namespace ExoRule
 						.Select(field =>
 						{
 							ConditionType error = (ConditionType)field.GetValue(null);
-							if (error.Code == null)
+							if (error != null && error.Code == null)
 								error.Code = field.DeclaringType.Name + "." + field.Name;
 							return error; 
 						}))
