@@ -276,7 +276,13 @@ namespace ExoRule
 
 				// Return the existing condition
 				else
+				{
+					// Update the message if a different message was passed in
+					if (!string.IsNullOrEmpty(message) && message != conditionTarget.Condition.Message)
+						conditionTarget.Condition.Message = message;
+
 					return conditionTarget.Condition;
+				}
 			}
 
 			// Destroy the condition if it exists on the target and is no longer valid

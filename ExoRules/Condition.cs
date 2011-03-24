@@ -52,7 +52,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the <see cref="Message"/> for the condition.
 		/// </summary>
-		public string Message { get; private set; }
+		public string Message { get; internal set; }
 
 		/// <summary>
 		/// Gets the <see cref="ConditionType"/> the condition is for.
