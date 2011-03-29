@@ -52,7 +52,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the <see cref="Message"/> for the condition.
 		/// </summary>
-		public string Message { get; internal set; }
+		public string Message { get; private set; }
 
 		/// <summary>
 		/// Gets the <see cref="ConditionType"/> the condition is for.
@@ -149,6 +149,21 @@ namespace ExoRule
 		public static IEnumerable<Condition> GetConditions(GraphInstance instance)
 		{
 			return instance.GetExtension<RuleManager>().GetConditions();
+		}
+
+		/// <summary>
+		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="GraphInstance"/>.
+		/// </summary>
+		/// <param name="instance"></param>
+		/// <returns></returns>
+		public static IEnumerable<Condition> GetConditions(object instance)
+		{
+			GraphInstance graphInstance = GraphContext.Current.GetGraphInstance(instance);
+
+			if (instance == null)
+				throw new ArgumentException("Specified instance is not a valid GraphInstance");
+
+			return graphInstance.GetExtension<RuleManager>().GetConditions();
 		}
 
 		/// <summary>
