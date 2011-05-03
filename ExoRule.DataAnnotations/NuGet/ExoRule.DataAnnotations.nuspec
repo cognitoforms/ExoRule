@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<package>
+	<metadata>
+		<id>ExoRule.DataAnnotations</id>
+		<version>1.0.0</version>
+		<authors>Jamie Thomas</authors>
+		<description>ExoRule.DataAnnotations description</description>
+		<summary>ExoRule.DataAnnotations summary</summary>
+		<projectUrl>http://exosuite.com/</projectUrl>
+		<licenseUrl>http://exosuite.com/license</licenseUrl>
+		<dependencies>
+		  <dependency id="ExoGraph" version="1.0.0" />
+		  <dependency id="ExoRule" version="1.0.0" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\bin\Debug\ExoRule.DataAnnotations.dll" target="lib"/>
+	</files>
+</package>
