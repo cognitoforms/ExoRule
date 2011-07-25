@@ -23,11 +23,15 @@ namespace ExoRule.Validation
 			: this(rootType, property, CreateError(rootType, property, label, sets))
 		{ }
 
+		public RequiredRule(string rootType, string property, Func<string> label, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+			: this(rootType, property, RuleInvocationType.PropertyChanged, CreateError(rootType, property, label, sets))
+		{ }
+
 		public RequiredRule(string rootType, string property, Error error)
 			: this(rootType, property, RuleInvocationType.PropertyChanged, error)
 		{ }
 
-		protected RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error)
+		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error)
 			: base(rootType, property, error, invocationTypes, property)
 		{ }
 
