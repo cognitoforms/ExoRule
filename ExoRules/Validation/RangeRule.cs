@@ -69,7 +69,7 @@ namespace ExoRule.Validation
 		{
 			object value = root.Instance.GetType().GetProperty(Property.Name).GetValue(root.Instance, null);
 
-			if (value == null)
+			if (value == null || (value is double && double.IsNaN((double)value)))
 				return true;
 
 			// min <= value <= max
