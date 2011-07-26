@@ -31,7 +31,7 @@ namespace ExoRule.Validation
 		/// <param name="compareOperator"></param>
 		/// <param name="invocationTypes"></param>
 		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Func<string> label, Func<string> compareLabel)
-			: this(rootType, property, compareSource, compareOperator, label, compareLabel, RuleInvocationType.PropertyChanged)
+			: this(rootType, property, compareSource, compareOperator, label, compareLabel, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew)
 		{ }
 
 		/// <summary>

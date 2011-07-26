@@ -22,11 +22,11 @@ namespace ExoRule.Validation
 		#region Constructors
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, params ConditionTypeSet[] sets)
-			: this(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, RuleInvocationType.PropertyChanged, sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew, sets)
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error)
-			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged, error)
+			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew, error)
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
