@@ -71,7 +71,12 @@ namespace ExoRule.Validation
 			if (value == null)
 				return false;
 
-			int len = value.ToString().Length;
+			string str = value.ToString();
+
+			if (str == null)
+				return false;
+
+			int len = str.Length;
 			return (Maximum > 0 && len > Maximum) || (Minimum > 0 && len < Minimum);
 		}
 
