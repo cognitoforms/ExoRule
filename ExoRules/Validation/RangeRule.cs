@@ -19,7 +19,7 @@ namespace ExoRule.Validation
 		#region Constructors
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<string> label, Func<IComparable, string> format)
-			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew)
+			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged)
 		{ }
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<string> label, Func<IComparable, string> format, RuleInvocationType invocationTypes)

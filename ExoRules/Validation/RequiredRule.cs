@@ -28,7 +28,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public RequiredRule(string rootType, string property, Error error)
-			: this(rootType, property, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew, error)
+			: this(rootType, property, RuleInvocationType.PropertyChanged, error)
 		{ }
 
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error)

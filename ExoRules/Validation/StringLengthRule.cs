@@ -20,7 +20,7 @@ namespace ExoRule.Validation
 		#region Constructors
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<string> label, Func<int, string> format)
-			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged | RuleInvocationType.InitNew)
+			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged)
 		{ }
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<string> label, Func<int, string> format, RuleInvocationType invocationTypes)
