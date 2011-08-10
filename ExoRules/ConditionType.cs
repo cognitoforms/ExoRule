@@ -175,7 +175,7 @@ namespace ExoRule
 		{
 			// Automatically calculate predicates if they were not specified
 			if (predicates == null)
-				predicates = PredicateBuilder.GetPredicates(condition.Method, method => Rule<TRoot>.PredicateFilter(condition.Method, method)).ToArray();
+				predicates = PredicateBuilder.GetPredicates(condition.Method, method => Rule<TRoot>.PredicateFilter(condition.Method, method), false).ToArray();
 
 			// Automatically default the properties to be the same as the predicates if they are not specified.
 			if (properties == null)
@@ -194,7 +194,7 @@ namespace ExoRule
 				conditions.Add(this);
 
 			// Create an condition rule based on the specified condition
-			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, graphType.Name, predicates, new ConditionType[] { this }, root => When(root, () => condition(root), properties));
+			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, new ConditionType[] { this }, root => When(root, () => condition(root), properties));
 		}
 
 		public override string ToString()

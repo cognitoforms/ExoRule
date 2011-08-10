@@ -33,7 +33,7 @@ namespace ExoRule.Validation
 				this.sourcePath = sourcePath.Take(sourcePath.Length - 1).ToArray();
 				
 				// Get the last property along the path
-				GraphStep step = instancePath.FirstStep;
+				GraphStep step = instancePath.FirstSteps.First();
 				while (step.NextSteps.Any())
 					step = step.NextSteps.First();
 				this.SourceProperty = step.Property;

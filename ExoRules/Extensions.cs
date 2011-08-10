@@ -51,5 +51,14 @@ namespace ExoRule
 
 		class Events : Dictionary<string, Type>
 		{ }
+
+		/// <summary>
+		/// Runs all property get rules pending invocation for the specified instance.
+		/// </summary>
+		/// <param name="instance"></param>
+		public static void RunPropertyGetRules(this GraphInstance instance)
+		{
+			instance.GetExtension<RuleManager>().RunPropertyGetRules(instance);
+		}
 	}
 }

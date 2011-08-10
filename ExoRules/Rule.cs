@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using ExoGraph;
 using System.Runtime.Serialization;
+using System.Linq.Expressions;
 
 namespace ExoRule
 {
@@ -65,7 +66,7 @@ namespace ExoRule
 			this.ExecutionLocation = RuleExecutionLocation.Server;
 			
 			// Split the predicates into property change paths and return values
-			if (predicates != null)
+			if (predicates != null && predicates.Length > 0)
 				SetPredicates(predicates);
 		}
 
@@ -81,7 +82,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the root <see cref="GraphType"/> of the rule.
 		/// </summary>
-		public GraphType RootType
+		public virtual GraphType RootType
 		{
 			get
 			{
@@ -102,21 +103,24 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Gets the set of <see cref="RuleInvocationType"/> governing when the rule will run.
+		/// Gets or sets the <see cref="RuleInvocationType"/> governing when the rule will run.
 		/// </summary>
 		public RuleInvocationType InvocationTypes { get; protected set; }
 
+		/// <summary>
+		/// Gets or sets the execution location governing where the rule will run: server (default) and/or client.
+		/// </summary>
 		public RuleExecutionLocation ExecutionLocation { get; set; }
 
 		/// <summary>
 		/// Gets the set of predicate paths that trigger property change invocations.
 		/// </summary>
-		public string[] Predicates { get; private set; }
+		public string[] Predicates { get; internal set; }
 
 		/// <summary>
 		/// Gets the set of properties that trigger property get invocations.
 		/// </summary>
-		public string[] ReturnValues { get; private set; }
+		public string[] ReturnValues { get; internal set; }
 
 		/// <summary>
 		/// Gets the set of <see cref="ConditionType"/> instances the current rule is responsible
@@ -137,15 +141,29 @@ namespace ExoRule
 		protected void SetPredicates(string[] predicates)
 		{
 			this.Predicates = predicates
-					.Where(predicate => !predicate.EndsWith(" return"))
+					.Where(predicate => !predicate.StartsWith("return "))
 					.ToArray(); ;
 
 			this.ReturnValues = predicates
-					.Where((predicate) => predicate.EndsWith(" return"))
-					.Select((predicate) => predicate.Substring(0, predicate.Length - 7))
+					.Where((predicate) => predicate.StartsWith("return "))
+					.Select((predicate) => predicate.Substring(7))
 					.ToArray();
+
+			// Automatically mark rules with return values as property get rules
+			if (this.ReturnValues.Length > 0)
+			{
+				// Remove property change invocation
+				this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
+
+				// Add property get invocation
+				this.InvocationTypes |= RuleInvocationType.PropertyGet;
+			}
 		}
 
+		protected virtual string[] GetPredicates()
+		{
+			return new string[] { };
+		}
 
 		/// <summary>
 		/// Gets all static rules defined on the specified types.
@@ -233,6 +251,10 @@ namespace ExoRule
 		/// </summary>
 		public void Register()
 		{
+			// Automatically detect predicates if none were specified
+			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
+				SetPredicates(GetPredicates());
+
 			// Track the rule registration for the root graph type
 			List<Rule> rules = RootType.GetExtension<List<Rule>>();
 			rules.Add(this);
@@ -259,9 +281,40 @@ namespace ExoRule
 				// Subscribe to property get notifications for all return values
 				RootType.PropertyGet += (sender, e) =>
 				{
-					if (e.IsFirstAccess && this.ReturnValues.Contains(e.Property.Name))
-						Invoke(e.Instance, e);
+					// Determine if the rule is responsible for calculating the property being accessed
+					if (ReturnValues.Contains(e.Property.Name))
+					{
+						// Get the rule manager for the current instance
+						var manager = e.Instance.GetExtension<RuleManager>();
+						
+						// Determine if the rule needs to be run
+						if (e.IsFirstAccess || manager.IsPendingInvocation(this))
+						{
+							// Invoke the rule
+							Invoke(e.Instance, e);
+
+							// Mark the rule state as no longer requiring invocation
+							manager.SetPendingInvocation(this, false);
+						}
+					}
 				};
+
+				// Subscribe to property change notifications for all rule predicates
+				foreach (string predicate in Predicates)
+				{
+					RootType.GetPath(predicate).Change += (sender, e) =>
+					{
+						// Get the rule manager for the current instance
+						var manager = e.Instance.GetExtension<RuleManager>();
+
+						// Mark the rule state as requiring invocation
+						manager.SetPendingInvocation(this, true);
+
+						// Raise property change notifications
+						foreach (var property in ReturnValues)
+							e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+					};
+				}
 			}
 
 			// Property Change Invocation
@@ -272,14 +325,14 @@ namespace ExoRule
 				{
 					RootType.GetPath(predicate).Change += (sender, e) =>
 					{
-						// Get the join point for the current rule and instance
-						RuleState state = e.Instance.GetExtension<RuleManager>().GetState(this);
+						// Get the rule manager for the current instance
+						var manager = e.Instance.GetExtension<RuleManager>();
 
 						// Register the rule to run if it is not already registered
-						if (!state.IsPendingInvocation)
+						if (!manager.IsPendingInvocation(this))
 						{
-							// Flag the instance as pending invocation for this rule
-							state.IsPendingInvocation = true;
+							// Mark the rule state as requiring invocation
+							manager.SetPendingInvocation(this, true);
 
 							// Invoke the rule when the last graph event scope exits
 							GraphEventScope.OnExit(() => 
@@ -287,7 +340,10 @@ namespace ExoRule
 								// Only invoke the rule if the instance is of the same type as the rule root type
                                 if (RootType.IsInstanceOfType(e.Instance))
                                 {
-                                    state.IsPendingInvocation = false;
+									// Mark the rule state as no longer requiring invocation
+									manager.SetPendingInvocation(this, false);
+
+									// Invoke the rule
                                     Invoke(e.Instance, e);
                                 }
 							});
@@ -305,22 +361,6 @@ namespace ExoRule
 		/// </summary>
 		protected internal virtual void OnRegister()
 		{ }
-
-		#endregion
-
-		#region RuleState
-
-		/// <summary>
-		/// Tracks instance-specific state for each rule.
-		/// </summary>
-		internal class RuleState
-		{
-			internal RuleState()
-			{ }
-
-			public bool ShouldInvoke { get; set; }
-			public bool IsPendingInvocation { get; set; }
-		}
 
 		#endregion
 
@@ -347,17 +387,9 @@ namespace ExoRule
 	/// Concrete subclass of <see cref="Rule"/> that represents a rule for a specific root type.
 	/// </summary>
 	/// <typeparam name="TRoot"></typeparam>
-	[DataContract]
 	public class Rule<TRoot> : Rule
 			where TRoot : class
 	{
-		#region Fields
-
-		string rootType;
-		string[] returnValues;
-
-		#endregion
-
 		#region Constructors
 
 		static Rule()
@@ -374,51 +406,30 @@ namespace ExoRule
 		{ }
 
 		public Rule(RuleInvocationType invocationTypes, string[] predicates, Action<TRoot> action)
-			: this(null, invocationTypes, null, predicates, action)
+			: this(null, invocationTypes, predicates, action)
 		{ }
 
 		public Rule(RuleInvocationType invocationTypes, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
-			: this(null, invocationTypes, null, predicates, conditionTypes, action)
-		{ }
-
-		public Rule(RuleInvocationType invocationTypes, string rootType, Action<TRoot> action)
-			: this(null, invocationTypes, rootType, null, action)
-		{ }
-
-		public Rule(RuleInvocationType invocationTypes, string rootType, string[] predicates, Action<TRoot> action)
-			: this(null, invocationTypes, rootType, predicates, action)
-		{ }
-
-		public Rule(RuleInvocationType invocationTypes, string rootType, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
-			: this(null, invocationTypes, rootType, predicates, conditionTypes, action)
+			: this(null, invocationTypes, predicates, conditionTypes, action)
 		{ }
 
 		public Rule(string name, Action<TRoot> action)
-			: this(name, RuleInvocationType.PropertyChanged, null, null, null, action)
+			: this(name, RuleInvocationType.PropertyChanged, null, null, action)
 		{ }
 
 		public Rule(string name, RuleInvocationType invocationTypes, Action<TRoot> action)
-			: this(name, invocationTypes, null, null, null, action)
+			: this(name, invocationTypes, null, null, action)
 		{ }
 
 		public Rule(string name, RuleInvocationType invocationTypes, string[] predicates, Action<TRoot> action)
-			: this(name, invocationTypes, null, predicates, null, action)
+			: this(name, invocationTypes, predicates, null, action)
 		{ }
 
-		public Rule(string name, RuleInvocationType invocationTypes, string rootType, Action<TRoot> action)
-			: this(name, invocationTypes, rootType, null, null, action)
-		{ }
-
-		public Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates, Action<TRoot> action)
-			: this(name, invocationTypes, rootType, predicates, null, action)
-		{ }
-
-		public Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
-			: base(rootType ?? GraphContext.Current.GetGraphType<TRoot>().Name, name, invocationTypes, conditionTypes, predicates)
+		public Rule(string name, RuleInvocationType invocationTypes, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
+			: base(null, name, invocationTypes, conditionTypes, predicates)
 		{
 			Initialize(action);
 		}
-
 
 		internal Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates)
 			: base(rootType ?? GraphContext.Current.GetGraphType<TRoot>().Name, name, invocationTypes, predicates)
@@ -438,35 +449,83 @@ namespace ExoRule
 		/// </summary>
 		public Action<TRoot> Action { get; private set; }
 
+		/// <summary>
+		/// Gets the root <see cref="GraphType"/> of the rule.
+		/// </summary>
+		public override GraphType RootType
+		{
+			get
+			{
+				return GraphContext.Current.GetGraphType<TRoot>();
+			}
+		}
+
 		#endregion
 
 		#region Methods
+
+		public Rule<TRoot> OnInit()
+		{
+			this.InvocationTypes |= RuleInvocationType.InitNew | RuleInvocationType.InitExisting;
+			return this;
+		}
+
+		public Rule<TRoot> OnInitNew()
+		{
+			this.InvocationTypes |= RuleInvocationType.InitNew;
+			return this;
+		}
+
+		public Rule<TRoot> OnInitExisting()
+		{
+			this.InvocationTypes |= RuleInvocationType.InitExisting;
+			return this;
+		}
+
+		public Rule<TRoot> OnChangeOf(params string[] predicates)
+		{
+			Predicates = predicates;
+			if ((this.InvocationTypes & RuleInvocationType.PropertyGet) == 0)
+				this.InvocationTypes |= RuleInvocationType.PropertyChanged;
+			return this;
+		}
+
+		public Rule<TRoot> Returns(params Expression<Func<TRoot, object>>[] properties)
+		{
+			return Returns(properties.Select(p => p.Body is MemberExpression ? p.Body : ((UnaryExpression)p.Body).Operand).OfType<MemberExpression>().Select(m => m.Member.Name).ToArray());
+		}
+
+		public Rule<TRoot> Returns(params string[] properties)
+		{
+			ReturnValues = properties;
+			this.InvocationTypes |= RuleInvocationType.PropertyGet;
+			this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
+			return this;
+		}
+
+		protected override string[] GetPredicates()
+		{
+			GraphPath path;
+			return PredicateBuilder
+				.GetPredicates(Action.Method, method => Rule<TRoot>.PredicateFilter(Action.Method, method), (InvocationTypes | RuleInvocationType.PropertyGet) > 0)
+				.Where(predicate => RootType.TryGetPath(predicate.StartsWith("return ") ? predicate.Substring(7) : predicate, out path))
+				.ToArray();
+		}
 
 		internal void Initialize(Action<TRoot> action)
 		{
 			// Set the rule action
 			Action = action;
-
-			// Automatically detect predicates if none were specified
-			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
-			{
-				GraphPath path;
-				SetPredicates(
-					PredicateBuilder.GetPredicates(action.Method, method => Rule<TRoot>.PredicateFilter(action.Method, method))
-					.Where(predicate => RootType.TryGetPath(predicate, out path))
-					.ToArray());
-			}
 		}
-
-
 
 		/// <summary>
 		/// Converts <see cref="Action<TRoot>"/> into a corresponding <see cref="Rule<TRoot>"/> instance.
 		/// </summary>
-		public static implicit operator Rule<TRoot>(Delegate action)
+		public static implicit operator Rule<TRoot>(Action<TRoot> action)
 		{
-			return new Rule<TRoot>((Action<TRoot>)action);
+			return new Rule<TRoot>(action);
 		}
+
 		/// <summary>
 		/// Invokes the action for the current rule on the specified <see cref="GraphInstance"/>.
 		/// </summary>
@@ -479,6 +538,8 @@ namespace ExoRule
 
 		#endregion
 	}
+
+	public delegate void Rule2<TRoot>(TRoot root);
 
 	#endregion
 

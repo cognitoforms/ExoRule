@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ExoGraph;
 
 namespace ExoRule
 {
@@ -10,7 +11,7 @@ namespace ExoRule
 	/// </summary>
 	internal class RuleManager
 	{
-		Dictionary<Rule, Rule.RuleState> ruleStates = new Dictionary<Rule, Rule.RuleState>();
+		HashSet<Rule> pendingInvocation = new HashSet<Rule>();
 		Dictionary<string, ConditionTarget> conditions = new Dictionary<string, ConditionTarget>();
 
 
@@ -31,17 +32,36 @@ namespace ExoRule
 			conditions.Remove(error.Code);
 		}
 
-		internal Rule.RuleState GetState(Rule rule)
+		internal bool IsPendingInvocation(Rule rule)
 		{
-			Rule.RuleState state;
-			if (!ruleStates.TryGetValue(rule, out state))
-				ruleStates[rule] = state = new Rule.RuleState();
-			return state;
+			return pendingInvocation.Contains(rule);
+		}
+
+		internal void SetPendingInvocation(Rule rule, bool isPending)
+		{
+			if (isPending)
+				pendingInvocation.Add(rule);
+			else
+				pendingInvocation.Remove(rule);
 		}
 
 		internal IEnumerable<Condition> GetConditions()
 		{
 			return conditions.Values.Select(target => target.Condition).Distinct();
+		}
+
+
+		internal void RunPropertyGetRules(GraphInstance instance)
+		{
+			pendingInvocation.RemoveWhere(rule =>
+				{
+					if ((rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0)
+					{
+						rule.Invoke(instance, null);
+						return true;
+					}
+					return false;
+				});
 		}
 	}
 }

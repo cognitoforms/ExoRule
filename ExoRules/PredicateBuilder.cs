@@ -12,9 +12,12 @@ namespace ExoRule
 {
 	#region PredicateBuilder
 
+	/// <summary>
+	/// Builds up a unique set of property paths accessed by a method, as well as 
+	/// properties modified on a root to support automatic property change rule registration.
+	/// </summary>
 	internal class PredicateBuilder
 	{
-		static readonly string[] CollectionChanges = new string[] { "Add", "Clear", "Insert", "Remove", "Merge" };
 		List<string> getPaths = new List<string>();
 		List<string> setPaths = new List<string>();
 		Predicate<MethodBase> methodFilter;
@@ -22,17 +25,15 @@ namespace ExoRule
 
 		private PredicateBuilder() { }
 
-		public static List<string> GetPredicates(MethodBase method, Predicate<MethodBase> methodFilter)
+		public static List<string> GetPredicates(MethodBase method, Predicate<MethodBase> methodFilter, bool isSetRule)
 		{
 			MethodIntrospector introspector = new MethodIntrospector(method, methodFilter);
-			return (new PredicateBuilder()).GetPredicates(method, introspector.Vertices[method.IsStatic ? 0 : 1], methodFilter);
+			return new PredicateBuilder() { methodFilter = methodFilter, isSetRule = isSetRule }.GetPredicates(introspector.Vertices[method.IsStatic ? 0 : 1]);
 		}
 
-		List<string> GetPredicates(MethodBase method, Vertex root, Predicate<MethodBase> methodFilter)
+		List<string> GetPredicates(Vertex root)
 		{
-			List<string> returnValue = new List<string>();
-			this.methodFilter = methodFilter;
-			isSetRule = method.DeclaringType.Name.StartsWith("Set");
+			List<string> predicates = new List<string>();
 
 			BuildPaths(root, "");
 			foreach (string predicate in getPaths)
@@ -41,15 +42,15 @@ namespace ExoRule
 				if (value.Length > root.Name.Length + 2)
 				{
 					value = value.Substring(root.Name.Length + 2);
-					returnValue.Add(value);
+					predicates.Add(value);
 				}
 			}
 
-				foreach (string predicate in setPaths)
-					if (predicate.Length > root.Name.Length + 2)
-						returnValue.Add(predicate.Substring(root.Name.Length + 2) + " return");
+			foreach (string predicate in setPaths)
+				if (predicate.Length > root.Name.Length + 2)
+					predicates.Add("return " + predicate.Substring(root.Name.Length + 2));
 
-			return returnValue;
+			return predicates;
 		}
 
 		void BuildPaths(Vertex vertex, string path)
@@ -702,34 +703,6 @@ namespace ExoRule
 			{
 				return string.Format("Name = {0}; Edges = {1}", Name, Edges.Count);
 			}
-
-			public void PrintGraph(bool parent)
-			{
-				if (parent)
-					PrintParents(0, 0);
-				else
-					PrintChildren(0, 0);
-			}
-
-			void PrintChildren(int spaces, int dashes)
-			{
-				foreach (Edge e in Edges)
-				{
-					string message = string.Format("{2}{3}{0} - {1}", e.Child.Name, e.Name, "".PadLeft(spaces), "".PadLeft(dashes, '-'));
-					System.Diagnostics.Debug.WriteLine(message);
-					e.Child.PrintChildren(spaces + dashes + e.Child.Name.Length / 2, e.Child.Name.Length / 2);
-				}
-			}
-
-			void PrintParents(int spaces, int dashes)
-			{
-				foreach (Edge e in InEdges)
-				{
-					string message = string.Format("{2}{3}{0} - {1}", e.Parent.Name, e.Name, "".PadLeft(spaces), "".PadLeft(dashes, '-'));
-					System.Diagnostics.Debug.WriteLine(message);
-					e.Parent.PrintParents(spaces + dashes + e.Child.Name.Length / 2, e.Parent.Name.Length / 2);
-				}
-			}
 		}
 
 		#endregion
@@ -817,7 +790,12 @@ namespace ExoRule
 
 					case OperandType.InlineType: token = ReadInt32(); return new TypeInstruction(m_enclosingMethod, offset, opCode, token, m_position - offset);
 
-					case OperandType.InlineMethod: token = ReadInt32(); return new MethodInstruction(m_enclosingMethod, offset, opCode, token, m_position - offset);
+					case OperandType.InlineMethod: 
+						token = ReadInt32();
+						if (opCode.Name == "ldftn")
+							return new ILInstruction(m_enclosingMethod, offset, opCode, m_position - offset); 
+						else 
+							return new MethodInstruction(m_enclosingMethod, offset, opCode, token, m_position - offset);
 
 					case OperandType.InlineSwitch:
 						Int32 cases = ReadInt32();
