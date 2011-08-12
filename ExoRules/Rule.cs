@@ -251,6 +251,10 @@ namespace ExoRule
 		/// </summary>
 		public void Register()
 		{
+			// Default the invocation type to PropertyChanged if none were assigned
+			if ((int)InvocationTypes == 1)
+				InvocationTypes = RuleInvocationType.PropertyChanged;
+
 			// Automatically detect predicates if none were specified
 			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
 				SetPredicates(GetPredicates());
@@ -304,15 +308,19 @@ namespace ExoRule
 				{
 					RootType.GetPath(predicate).Change += (sender, e) =>
 					{
-						// Get the rule manager for the current instance
-						var manager = e.Instance.GetExtension<RuleManager>();
+						// Only invoke the rule if the instance is of the same type as the rule root type
+						if (RootType.IsInstanceOfType(e.Instance))
+						{
+							// Get the rule manager for the current instance
+							var manager = e.Instance.GetExtension<RuleManager>();
 
-						// Mark the rule state as requiring invocation
-						manager.SetPendingInvocation(this, true);
+							// Mark the rule state as requiring invocation
+							manager.SetPendingInvocation(this, true);
 
-						// Raise property change notifications
-						foreach (var property in ReturnValues)
-							e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+							// Raise property change notifications
+							foreach (var property in ReturnValues)
+								e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+						}
 					};
 				}
 			}
@@ -325,28 +333,28 @@ namespace ExoRule
 				{
 					RootType.GetPath(predicate).Change += (sender, e) =>
 					{
-						// Get the rule manager for the current instance
-						var manager = e.Instance.GetExtension<RuleManager>();
-
-						// Register the rule to run if it is not already registered
-						if (!manager.IsPendingInvocation(this))
+						// Only invoke the rule if the instance is of the same type as the rule root type
+						if (RootType.IsInstanceOfType(e.Instance))
 						{
-							// Mark the rule state as requiring invocation
-							manager.SetPendingInvocation(this, true);
+							// Get the rule manager for the current instance
+							var manager = e.Instance.GetExtension<RuleManager>();
 
-							// Invoke the rule when the last graph event scope exits
-							GraphEventScope.OnExit(() => 
+							// Register the rule to run if it is not already registered
+							if (!manager.IsPendingInvocation(this))
 							{
-								// Only invoke the rule if the instance is of the same type as the rule root type
-                                if (RootType.IsInstanceOfType(e.Instance))
-                                {
+								// Mark the rule state as requiring invocation
+								manager.SetPendingInvocation(this, true);
+
+								// Invoke the rule when the last graph event scope exits
+								GraphEventScope.OnExit(() =>
+								{
 									// Mark the rule state as no longer requiring invocation
 									manager.SetPendingInvocation(this, false);
 
 									// Invoke the rule
-                                    Invoke(e.Instance, e);
-                                }
-							});
+									Invoke(e.Instance, e);
+								});
+							}
 						}
 					};
 				}
@@ -398,7 +406,7 @@ namespace ExoRule
 		}
 
 		public Rule(Action<TRoot> action)
-			: this(null, RuleInvocationType.PropertyChanged, null, null, action)
+			: this(null, (RuleInvocationType)(1), null, null, action)
 		{ }
 
 		public Rule(RuleInvocationType invocationTypes, Action<TRoot> action)
@@ -414,7 +422,7 @@ namespace ExoRule
 		{ }
 
 		public Rule(string name, Action<TRoot> action)
-			: this(name, RuleInvocationType.PropertyChanged, null, null, action)
+			: this(name, (RuleInvocationType)(1), null, null, action)
 		{ }
 
 		public Rule(string name, RuleInvocationType invocationTypes, Action<TRoot> action)
