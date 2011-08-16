@@ -185,10 +185,10 @@ namespace ExoRule.Validation
 			{
 				case CompareOperator.Equal: return compareResult == 0;
 				case CompareOperator.NotEqual: return compareResult != 0;
-				case CompareOperator.GreaterThan: return compareResult < 0;
-				case CompareOperator.GreaterThanEqual: return compareResult <= 0;
-				case CompareOperator.LessThan: return compareResult > 0;
-				case CompareOperator.LessThanEqual: return compareResult >= 0;
+				case CompareOperator.GreaterThan: return compareResult > 0;
+				case CompareOperator.GreaterThanEqual: return compareResult >= 0;
+				case CompareOperator.LessThan: return compareResult < 0;
+				case CompareOperator.LessThanEqual: return compareResult <= 0;
 				default: return false;
 			}
 		}
@@ -200,7 +200,7 @@ namespace ExoRule.Validation
 		/// <returns></returns>
 		protected override bool ConditionApplies(GraphInstance root)
 		{
-			return Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
+			return !Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
 		}
 
 		protected override string TypeName
