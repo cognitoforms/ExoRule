@@ -166,7 +166,8 @@ namespace ExoRule.Validation
 				return CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root);
 
 			// Otherwise, perform a comparison of the compare source relative to the compare value
-			return CompareRule.Compare(root, compareSource.GetValue(root), CompareOperator, CompareValue);
+			bool? result = CompareRule.Compare(root, compareSource.GetValue(root), CompareOperator, CompareValue);
+			return result.HasValue && result.Value;
 		}
 
 		protected override string TypeName

@@ -173,11 +173,20 @@ namespace ExoRule.Validation
 		/// <param name="compareOperator">The comparison operator.</param>
 		/// <param name="compareValue">The compare value.</param>
 		/// <returns>True if the comparison passes, false if the comparison fails.</returns>
-		protected internal static bool Compare(GraphInstance root, object sourceValue, CompareOperator compareOperator, object compareValue)
+		protected internal static bool? Compare(GraphInstance root, object sourceValue, CompareOperator compareOperator, object compareValue)
 		{
-			// Return false if the source of compare values are null
-			if (sourceValue == null || compareValue == null)
-				return false;
+			if (sourceValue == null && compareValue == null)
+			{
+				if (compareOperator == CompareOperator.Equal) return true;
+				else if (compareOperator == CompareOperator.NotEqual) return false;
+				else return null;
+			}
+			else if (sourceValue == null || compareValue == null)
+			{
+				if (compareOperator == CompareOperator.Equal) return false;
+				else if (compareOperator == CompareOperator.NotEqual) return true;
+				else return null;
+			}
 
 			// Perform the comparison and return the result
 			int compareResult = ((IComparable)sourceValue).CompareTo(compareValue);
@@ -200,7 +209,8 @@ namespace ExoRule.Validation
 		/// <returns></returns>
 		protected override bool ConditionApplies(GraphInstance root)
 		{
-			return !Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
+			bool? result = Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
+			return result.HasValue && !result.Value;
 		}
 
 		protected override string TypeName
