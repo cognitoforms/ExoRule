@@ -20,7 +20,7 @@ namespace ExoRule
 	{
 		#region Fields
 
-		ConditionType[] conditionTypes;
+		internal ConditionType[] conditionTypes;
 		string rootType;
 
 		#endregion
@@ -508,6 +508,12 @@ namespace ExoRule
 			ReturnValues = properties;
 			this.InvocationTypes |= RuleInvocationType.PropertyGet;
 			this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
+			return this;
+		}
+
+		public Rule<TRoot> Asserts(params ConditionType[] conditionTypes)
+		{
+			this.conditionTypes = conditionTypes;
 			return this;
 		}
 
