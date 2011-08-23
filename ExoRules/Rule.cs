@@ -553,8 +553,6 @@ namespace ExoRule
 		#endregion
 	}
 
-	public delegate void Rule2<TRoot>(TRoot root);
-
 	#endregion
 
 	#region Rule<TRule, TRoot>
