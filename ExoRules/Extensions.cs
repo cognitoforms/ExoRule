@@ -53,12 +53,32 @@ namespace ExoRule
 		{ }
 
 		/// <summary>
+		/// Returns all rules registered for the instance's type and ancestor types.
+		/// </summary>
+		/// <param name="instance"></param>
+		/// <returns></returns>
+		public static IEnumerable<Rule> GetRules(this GraphInstance instance)
+		{
+			return instance.Type.GetAncestorsInclusive().SelectMany(t => Rule.GetRegisteredRules(t));
+		}
+
+		/// <summary>
 		/// Runs all property get rules pending invocation for the specified instance.
 		/// </summary>
 		/// <param name="instance"></param>
-		public static void RunPropertyGetRules(this GraphInstance instance)
+		public static void RunPendingPropertyGetRules(this GraphInstance instance, Func<GraphProperty, bool> when)
 		{
-			instance.GetExtension<RuleManager>().RunPropertyGetRules(instance);
+			instance.GetExtension<RuleManager>().RunPropertyGetRules(instance, when);
+		}
+
+		/// <summary>
+		/// Runs all property get rules pending invocation for the specified instance.
+		/// </summary>
+		/// <param name="instance"></param>
+		public static void RunPropertyGetRules(this GraphInstance instance, Func<GraphProperty, bool> when)
+		{
+			foreach (Rule rule in instance.GetRules().Where(rule => (rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0 && rule.ReturnValues.Select(p => rule.RootType.Properties[p]).Any(when)))
+				rule.Invoke(instance, null);
 		}
 	}
 }

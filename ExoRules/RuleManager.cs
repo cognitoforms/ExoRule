@@ -50,12 +50,11 @@ namespace ExoRule
 			return conditions.Values.Select(target => target.Condition).Distinct();
 		}
 
-
-		internal void RunPropertyGetRules(GraphInstance instance)
+		internal void RunPropertyGetRules(GraphInstance instance, Func<GraphProperty, bool> when)
 		{
 			pendingInvocation.RemoveWhere(rule =>
 				{
-					if ((rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0)
+					if ((rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0 && rule.ReturnValues.Select(p => rule.RootType.Properties[p]).Any(when))
 					{
 						rule.Invoke(instance, null);
 						return true;
