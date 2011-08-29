@@ -136,6 +136,14 @@ namespace ExoRule
 
 		#endregion
 
+		#region Events
+
+		public static event EventHandler BeforeInvoke;
+
+		public static event EventHandler AfterInvoke;
+
+		#endregion
+
 		#region Methods
 
 		protected void SetPredicates(string[] predicates)
@@ -244,7 +252,29 @@ namespace ExoRule
 		/// </summary>
 		/// <param name="root"></param>
 		/// <param name="graphEvent"></param>
-		internal protected abstract void Invoke(GraphInstance root, GraphEvent graphEvent);
+		internal void Invoke(GraphInstance root, GraphEvent graphEvent)
+		{
+			try
+			{
+				if (BeforeInvoke != null)
+					BeforeInvoke(this, EventArgs.Empty);
+
+				OnInvoke(root, graphEvent);
+			}
+			finally
+			{
+				if (AfterInvoke != null)
+					AfterInvoke(this, EventArgs.Empty);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the rule on the specified <see cref="GraphInstance"/> as a result
+		/// of the specified triggering <see cref="GraphEvent"/>
+		/// </summary>
+		/// <param name="root"></param>
+		/// <param name="graphEvent"></param>
+		internal protected abstract void OnInvoke(GraphInstance root, GraphEvent graphEvent);
 
 		/// <summary>
 		/// Registers the rule with the current <see cref="GraphContext"/>.
@@ -508,6 +538,8 @@ namespace ExoRule
 			ReturnValues = properties;
 			this.InvocationTypes |= RuleInvocationType.PropertyGet;
 			this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
+			//this.InvocationTypes |= RuleInvocationType.InitExisting;
+			//this.InvocationTypes |= RuleInvocationType.PropertyChanged;
 			return this;
 		}
 
@@ -545,7 +577,7 @@ namespace ExoRule
 		/// </summary>
 		/// <param name="root"></param>
 		/// <param name="graphEvent"></param>
-		internal protected override void Invoke(GraphInstance root, GraphEvent graphEvent)
+		internal protected override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
 		{
 			Action((TRoot)root.Instance);
 		}

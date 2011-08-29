@@ -100,7 +100,7 @@ namespace ExoRule.Validation
 			return code;
 		}
 
-		protected internal override void Invoke(GraphInstance root, GraphEvent graphEvent)
+		protected internal override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
 		{
 			ConditionTypes.First().When(root.Instance, () => ConditionApplies(root), new string[] { Property.Name });
 		}
