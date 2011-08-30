@@ -68,7 +68,7 @@ namespace ExoRule
 		/// <param name="instance"></param>
 		public static void RunPendingPropertyGetRules(this GraphInstance instance, Func<GraphProperty, bool> when)
 		{
-			instance.GetExtension<RuleManager>().RunPropertyGetRules(instance, when);
+			instance.GetExtension<RuleManager>().RunPendingPropertyGetRules(instance, when);
 		}
 
 		/// <summary>

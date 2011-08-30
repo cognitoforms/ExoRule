@@ -50,8 +50,15 @@ namespace ExoRule
 			return conditions.Values.Select(target => target.Condition).Distinct();
 		}
 
-		internal void RunPropertyGetRules(GraphInstance instance, Func<GraphProperty, bool> when)
+		internal void RunPendingPropertyGetRules(GraphInstance instance, Func<GraphProperty, bool> when)
 		{
+			// First run all rules for return values associated with properties that have not yet been accessed
+			foreach (Rule rule in instance.GetRules()
+					.Where(rule => (rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0 && rule.ReturnValues.Select(p => rule.RootType.Properties[p])
+					.Any(p => when(p) && !instance.HasBeenAccessed(p))))
+				rule.Invoke(instance, null);
+
+			// Then run any property get rules that are pending invocation due to changes in the model
 			pendingInvocation.RemoveWhere(rule =>
 				{
 					if ((rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0 && rule.ReturnValues.Select(p => rule.RootType.Properties[p]).Any(when))
