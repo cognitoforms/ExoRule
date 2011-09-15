@@ -535,6 +535,9 @@ namespace ExoRule
 
 		public Rule<TRoot> Returns(params string[] properties)
 		{
+			if (properties == null || properties.Length == 0)
+				throw new ArgumentException("Rule must specify at least 1 property for Returns");
+
 			ReturnValues = properties;
 			this.InvocationTypes |= RuleInvocationType.PropertyGet;
 			this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
