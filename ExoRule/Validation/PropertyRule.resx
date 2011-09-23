@@ -150,6 +150,24 @@
   <data name="compare-on-or-before" xml:space="preserve">
     <value>{property} must be on or before {compareSource}.</value>
   </data>
+  <data name="listlength-compare-equal" xml:space="preserve">
+    <value>{property} length must be the same as {compareSource}.</value>
+  </data>
+  <data name="listlength-compare-greater-than" xml:space="preserve">
+    <value>{property} length must be greater than {compareSource}.</value>
+  </data>
+  <data name="listlength-compare-greater-than-or-equal" xml:space="preserve">
+    <value>{property} length must be greater than or equal to {compareSource}.</value>
+  </data>
+  <data name="listlength-compare-less-than" xml:space="preserve">
+    <value>{property} length must be less than {compareSource}.</value>
+  </data>
+  <data name="listlength-compare-less-than-or-equal" xml:space="preserve">
+    <value>{property} length must be less than or equal to {compareSource}.</value>
+  </data>
+  <data name="listlength-compare-not-equal" xml:space="preserve">
+    <value>{property} length must be different from {compareSource}.</value>
+  </data>
   <data name="range-at-least" xml:space="preserve">
     <value>{property} must be at least {min}.</value>
   </data>

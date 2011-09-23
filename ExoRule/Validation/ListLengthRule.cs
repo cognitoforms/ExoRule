@@ -84,6 +84,7 @@ namespace ExoRule.Validation
 				return compareLengthSource == null ? true : compareLengthSource.IsStatic;
 			}
 		}
+
 		#endregion
 
 		#region Methods
@@ -94,22 +95,22 @@ namespace ExoRule.Validation
 			switch (op)
 			{
 				case CompareOperator.Equal:
-					message = "compare-equal";
+					message = "listlength-compare-equal";
 					break;
 				case CompareOperator.NotEqual:
-					message = "compare-not-equal";
+					message = "listlength-compare-not-equal";
 					break;
 				case CompareOperator.GreaterThan:
-					message = "compare-greater-than";
+					message = "listlength-compare-greater-than";
 					break;
 				case CompareOperator.GreaterThanEqual:
-					message =  "compare-greater-than-or-equal";
+					message = "listlength-compare-greater-than-or-equal";
 					break;
 				case CompareOperator.LessThan:
-					message =  "compare-less-than";
+					message = "listlength-compare-less-than";
 					break;
 				case CompareOperator.LessThanEqual:
-					message = "compare-less-than-or-equal";
+					message = "listlength-compare-less-than-or-equal";
 					break;
 				default:
 					throw new ArgumentException("Invalid comparison operator for list length rule");
@@ -119,8 +120,7 @@ namespace ExoRule.Validation
 				GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
 				(s) => s
 					.Replace("{property}", label())
-					.Replace("{staticLength}", staticLength.ToString())
-					.Replace("{compareSource}", compareLabel()));
+					.Replace("{compareSource}", staticLength >= 0 ? staticLength.ToString() : compareLabel()));
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)
