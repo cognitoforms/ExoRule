@@ -528,6 +528,24 @@ namespace ExoRule
 			return this;
 		}
 
+		public Rule<TRoot> RunOnServer()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.Server;
+			return this;
+		}
+
+		public Rule<TRoot> RunOnClient()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.Client;
+			return this;
+		}
+
+		public Rule<TRoot> RunOnServerAndClient()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+			return this;
+		}
+
 		public Rule<TRoot> Returns(params Expression<Func<TRoot, object>>[] properties)
 		{
 			return Returns(properties.Select(p => p.Body is MemberExpression ? p.Body : ((UnaryExpression)p.Body).Operand).OfType<MemberExpression>().Select(m => m.Member.Name).ToArray());
