@@ -136,6 +136,10 @@ namespace ExoRule.DataAnnotations
 						foreach (var attr in property.GetAttributes<RangeAttribute>().Take(1))
 							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum, label, GetFormat<IComparable>(property)));
 
+						//Compare Attribute
+						foreach (var attr in property.GetAttributes<CompareAttribute>().Take(1))
+							rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator, label, () => attr.ComparisonPropertyName));
+
 						// ListLength Attribute
 						foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
 							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp, label, () => attr.LengthCompareProperty));

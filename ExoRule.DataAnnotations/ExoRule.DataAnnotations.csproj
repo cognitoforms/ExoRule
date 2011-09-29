@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="AllowedValuesAttribute.cs" />
     <Compile Include="AnnotationsRuleProvider.cs" />
+    <Compile Include="CompareAttribute.cs" />
     <Compile Include="ListLengthAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
