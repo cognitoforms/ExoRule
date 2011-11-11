@@ -259,7 +259,7 @@ namespace ExoRule
 				if (BeforeInvoke != null)
 					BeforeInvoke(this, EventArgs.Empty);
 
-				OnInvoke(root, graphEvent);
+				GraphEventScope.Perform(() => OnInvoke(root, graphEvent));
 			}
 			finally
 			{
