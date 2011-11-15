@@ -15,7 +15,6 @@ namespace ExoRule
 	/// <summary>
 	/// Abstract base class for all rule instances. Rules for concrete types should inherit from <see cref="Rule<T>"/>.
 	/// </summary>
-	[DataContract]
 	public abstract class Rule : IRuleProvider
 	{
 		#region Fields
@@ -87,18 +86,6 @@ namespace ExoRule
 			get
 			{
 				return GraphContext.Current.GetGraphType(rootType);
-			}
-		}
-
-		/// <summary>
-		/// Gets the type name for serialization purposes.
-		/// </summary>
-		[DataMember(Name = "type")]
-		protected virtual string TypeName
-		{
-			get
-			{
-				return Name;
 			}
 		}
 

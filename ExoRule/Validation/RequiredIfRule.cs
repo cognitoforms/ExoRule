@@ -10,7 +10,6 @@ using ExoRule;
 
 namespace ExoRule.Validation
 {
-	[DataContract(Name = "requiredIf")]
 	public class RequiredIfRule : PropertyRule
 	{
 		#region Fields
@@ -21,17 +20,17 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, params ConditionTypeSet[] sets)
-			: this(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, RuleInvocationType.PropertyChanged, sets)
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, format, RuleInvocationType.PropertyChanged, sets)
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error)
 			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged, error)
 		{ }
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
 			: this(rootType, property, compareSource, compareOperator, compareValue, invocationTypes,
-				CreateError(rootType, property, compareSource, compareOperator, compareValue, label, compareLabel, format, sets))
+				CreateError(rootType, property, compareSource, compareOperator, compareValue, format, sets))
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, Error error)
@@ -48,7 +47,6 @@ namespace ExoRule.Validation
 		/// <summary>
 		/// Gets the path to the comparison property.
 		/// </summary>
-		[DataMember(Name = "compareSource")]
 		public string CompareSource
 		{
 			get
@@ -75,7 +73,6 @@ namespace ExoRule.Validation
 		/// <summary>
 		/// The value to compare to.
 		/// </summary>
-		[DataMember(Name = "compareValue")]
 		public object CompareValue
 		{
 			get;
@@ -91,27 +88,11 @@ namespace ExoRule.Validation
 			private set;
 		}
 
-		/// <summary>
-		/// Private text version of <see cref="CompareOperator"/> to support WCF serialization.
-		/// </summary>
-		[DataMember(Name = "compareOperator")]
-		string CompareOperatorText
-		{
-			get
-			{
-				return CompareOperator.ToString();
-			}
-			set
-			{
-				CompareOperator = (CompareOperator)Enum.Parse(typeof(CompareOperator), value);
-			}
-		}
-
 		#endregion
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<string> label, Func<string> compareLabel, Func<object, string> format, params ConditionTypeSet[] sets)
+		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, params ConditionTypeSet[] sets)
 		{
 			// Determine the appropriate error message
 			string message;
@@ -145,12 +126,17 @@ namespace ExoRule.Validation
 				}
 			}
 
+			// Get the comparison source
+			var source = new PathSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var sourceType = source.SourceType;
+			var sourceProperty = source.SourceProperty;
+
 			// Create and return the error
 			return new Error(
 				GetErrorCode(rootType, property, "RequiredIf"), message, typeof(RequiredIfRule),
 				(s) => s
-					.Replace("{property}", label())
-					.Replace("{compareSource}", compareLabel())
+					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{compareSource}", GetLabel(sourceType, sourceProperty))
 					.Replace("{compareValue}", compareValue == null ? "" : format(compareValue)), sets);
 		}
 
@@ -168,14 +154,6 @@ namespace ExoRule.Validation
 			// Otherwise, perform a comparison of the compare source relative to the compare value
 			bool? result = CompareRule.Compare(root, compareSource.GetValue(root), CompareOperator, CompareValue);
 			return result.HasValue && result.Value;
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "requiredIf";
-			}
 		}
 
 		#endregion

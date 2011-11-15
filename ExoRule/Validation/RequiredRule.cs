@@ -14,17 +14,16 @@ namespace ExoRule.Validation
 	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
 	/// null or an empty list.
 	/// </summary>
-	[DataContract(Name = "required")]
 	public class RequiredRule : PropertyRule
 	{
 		#region Constructors
 
-		public RequiredRule(string rootType, string property, Func<string> label, params ConditionTypeSet[] sets)
-			: this(rootType, property, CreateError(rootType, property, label, sets))
+		public RequiredRule(string rootType, string property, params ConditionTypeSet[] sets)
+			: this(rootType, property, CreateError(rootType, property, sets))
 		{ }
 
-		public RequiredRule(string rootType, string property, Func<string> label, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
-			: this(rootType, property, invocationTypes, CreateError(rootType, property, label, sets))
+		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+			: this(rootType, property, invocationTypes, CreateError(rootType, property, sets))
 		{ }
 
 		public RequiredRule(string rootType, string property, Error error)
@@ -39,11 +38,11 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, Func<string> label, params ConditionTypeSet[] sets)
+		static Error CreateError(string rootType, string property, params ConditionTypeSet[] sets)
 		{
 			return new Error(
 				GetErrorCode(rootType, property, "Required"),
-				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", label()), sets);
+				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", GraphContext.Current.GetGraphType(rootType).Properties[property].Label), sets);
 		}
 
 		/// <summary>
@@ -56,14 +55,6 @@ namespace ExoRule.Validation
 			return 
 				root[Property] == null || 
 				(Property is GraphReferenceProperty && Property.IsList && root.GetList((GraphReferenceProperty)Property).Count == 0);
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "required";
-			}
 		}
 
 		#endregion

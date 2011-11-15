@@ -11,7 +11,6 @@ namespace ExoRule
 	/// A collection of condition types
 	/// </summary>
 	[Serializable]
-	[DataContract]
 	public class ConditionTypeSet
 	{
 		#region Fields

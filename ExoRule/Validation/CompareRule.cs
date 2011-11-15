@@ -10,7 +10,6 @@ using ExoRule;
 
 namespace ExoRule.Validation
 {
-	[DataContract(Name = "compare")]
 	public class CompareRule : PropertyRule
 	{
 		#region Fields
@@ -30,8 +29,8 @@ namespace ExoRule.Validation
 		/// <param name="comparePath"></param>
 		/// <param name="compareOperator"></param>
 		/// <param name="invocationTypes"></param>
-		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Func<string> label, Func<string> compareLabel)
-			: this(rootType, property, compareSource, compareOperator, label, compareLabel, RuleInvocationType.PropertyChanged)
+		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator)
+			: this(rootType, property, compareSource, compareOperator, RuleInvocationType.PropertyChanged)
 		{ }
 
 		/// <summary>
@@ -43,8 +42,8 @@ namespace ExoRule.Validation
 		/// <param name="comparePath"></param>
 		/// <param name="compareOperator"></param>
 		/// <param name="invocationTypes"></param>
-		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Func<string> label, Func<string> compareLabel, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, compareSource, compareOperator, label, compareLabel), invocationTypes, GetPredicates(rootType, property, compareSource))
+		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, compareSource, compareOperator), invocationTypes, GetPredicates(rootType, property, compareSource))
 		{
 			// Get the graph property from the base class
 			GraphProperty p = Property;
@@ -72,7 +71,6 @@ namespace ExoRule.Validation
 		/// <summary>
 		/// The static or instance path of the property to compare to.
 		/// </summary>
-		[DataMember(Name = "compareSource")]
 		public string CompareSource
 		{
 			get
@@ -105,7 +103,6 @@ namespace ExoRule.Validation
 			private set;
 		}
 
-		[DataMember(Name = "compareOperator")]
 		public string CompareOperatorText
 		{
 			get
@@ -122,11 +119,13 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, Func<string> label, Func<string> compareLabel)
+		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator)
 		{
 			// Determine the appropriate error message
 			string message;
-			bool isDate = GraphContext.Current.GetGraphType(rootType).Properties.Any(p => p.Name == property && p is GraphValueProperty && ((GraphValueProperty)p).PropertyType == typeof(DateTime));
+			var rootGraphType = GraphContext.Current.GetGraphType(rootType);
+			var p = rootGraphType.Properties[property];
+			bool isDate = p is GraphValueProperty && ((GraphValueProperty)p).PropertyType == typeof(DateTime);
 			switch (compareOperator)
 			{
 				case CompareOperator.Equal:
@@ -151,12 +150,17 @@ namespace ExoRule.Validation
 					throw new ArgumentException("Invalid comparison operator for compare rule");
 			}
 
+			// Get the comparison source
+			var source = new PathSource(rootGraphType, compareSource);
+			var sourceType = source.SourceType;
+			var sourceProperty = source.SourceProperty;
+
 			// Create and return the error
 			return new Error(
 				GetErrorCode(rootType, property, "Compare"), message, typeof(CompareRule),
 				(s) => s
-					.Replace("{property}", label())
-					.Replace("{compareSource}", compareLabel()));
+					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{compareSource}", GetLabel(sourceType, sourceProperty)));
 		}
 
 		internal static string[] GetPredicates(string rootType, string property, string compareSource)
@@ -211,14 +215,6 @@ namespace ExoRule.Validation
 		{
 			bool? result = Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
 			return result.HasValue && !result.Value;
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "compare";
-			}
 		}
 
 		#endregion

@@ -13,17 +13,16 @@ namespace ExoRule.Validation
 	/// <summary>
 	/// Applies conditions when the value of a <see cref="GraphProperty"/> is not within a specified range.
 	/// </summary>
-	[DataContract(Name = "range")]
 	public class RangeRule : PropertyRule
 	{
 		#region Constructors
 
-		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<string> label, Func<IComparable, string> format)
-			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged)
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format)
+			: this(rootType, property, minimum, maximum, format, RuleInvocationType.PropertyChanged)
 		{ }
 
-		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<string> label, Func<IComparable, string> format, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum, label, format), invocationTypes)
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, minimum, maximum, format), invocationTypes)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;
@@ -33,17 +32,15 @@ namespace ExoRule.Validation
 
 		#region Properties
 
-		[DataMember(Name = "min")]
 		public IComparable Minimum { get; private set; }
 
-		[DataMember(Name = "max")]
 		public IComparable Maximum { get; private set; }
 
 		#endregion
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, IComparable minimum, IComparable maximum, Func<string> label, Func<IComparable, string> format)
+		static Error CreateError(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format)
 		{
 			bool isDate = minimum is DateTime || maximum is DateTime;
 			
@@ -60,7 +57,7 @@ namespace ExoRule.Validation
 			return new Error(
 				GetErrorCode(rootType, property, "Range"), message, typeof(RangeRule),
 				(s) => s
-					.Replace("{property}", label())
+					.Replace("{property}", GetLabel(rootType, property))
 					.Replace("{min}", minimum == null ? "" : format(minimum))
 					.Replace("{max}", maximum == null ? "" : format(maximum)), null);
 		}
@@ -82,14 +79,6 @@ namespace ExoRule.Validation
 				return Maximum.CompareTo(value) < 0;
 			else
 				return false;
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "range";
-			}
 		}
 
 		#endregion

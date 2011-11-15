@@ -14,17 +14,16 @@ namespace ExoRule.Validation
 	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
 	/// too short or long.
 	/// </summary>
-	[DataContract(Name = "stringLength")]
 	public class StringLengthRule : PropertyRule
 	{
 		#region Constructors
 
-		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<string> label, Func<int, string> format)
-			: this(rootType, property, minimum, maximum, label, format, RuleInvocationType.PropertyChanged)
+		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<int, string> format)
+			: this(rootType, property, minimum, maximum, format, RuleInvocationType.PropertyChanged)
 		{ }
 
-		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<string> label, Func<int, string> format, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum, label, format), invocationTypes)
+		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<int, string> format, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, minimum, maximum, format), invocationTypes)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;
@@ -34,17 +33,15 @@ namespace ExoRule.Validation
 
 		#region Properties
 
-		[DataMember(Name = "min", EmitDefaultValue = false)]
 		public int Minimum { get; private set; }
 
-		[DataMember(Name = "max", EmitDefaultValue = false)]
 		public int Maximum { get; private set; }
 
 		#endregion
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int minimum, int maximum, Func<string> label, Func<int, string> format)
+		static Error CreateError(string rootType, string property, int minimum, int maximum, Func<int, string> format)
 		{
 			string message;
 			if (minimum > 0 && maximum > 0)
@@ -59,7 +56,7 @@ namespace ExoRule.Validation
 			return new Error(
 				GetErrorCode(rootType, property, "StringLength"), message, typeof(StringLengthRule),
 				(s) => s
-					.Replace("{property}", label())
+					.Replace("{property}", GetLabel(rootType, property))
 					.Replace("{min}", format(minimum))
 					.Replace("{max}", format(maximum)), null);
 		}
@@ -78,14 +75,6 @@ namespace ExoRule.Validation
 
 			int len = str.Length;
 			return (Maximum > 0 && len > Maximum) || (Minimum > 0 && len < Minimum);
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "stringLength";
-			}
 		}
 
 		#endregion

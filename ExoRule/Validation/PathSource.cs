@@ -9,26 +9,25 @@ namespace ExoRule.Validation
 	/// </summary>
 	public class PathSource
 	{
-		GraphType sourceType;
 		string[] sourcePath;
-		GraphPath instancePath;
 
 		/// <summary>
 		/// Creates a new <see cref="PathSource"/> for the specified root type and path.
 		/// </summary>
-		/// <param name="rootType">The root <see cref="GraphType"/>, which is required for instance paths</param>
-		/// <param name="path">The source path, which is either and instance path of a static path</param>
+		/// <param name="rootType">The root type name, which is required for instance paths</param>
+		/// <param name="path">The source path, which is either an instance path or a static path</param>
 		public PathSource(GraphType rootType, string path)
 		{
 			// Store the source path
 			this.Path = path;
 
 			// Instance Path
+			GraphPath instancePath;
 			if (rootType != null && rootType.TryGetPath(path, out instancePath))
 			{
 				this.IsStatic = false;
 
-				this.sourceType = rootType;
+				this.RootType = rootType.Name;
 				this.sourcePath = path.Split('.');
 				this.sourcePath = sourcePath.Take(sourcePath.Length - 1).ToArray();
 				
@@ -36,7 +35,8 @@ namespace ExoRule.Validation
 				GraphStep step = instancePath.FirstSteps.First();
 				while (step.NextSteps.Any())
 					step = step.NextSteps.First();
-				this.SourceProperty = step.Property;
+				this.SourceProperty = step.Property.Name;
+				this.SourceType = step.Property.DeclaringType.Name;
 			}
 
 			// Static Path
@@ -44,9 +44,16 @@ namespace ExoRule.Validation
 			{
 				this.IsStatic = true;
 
-				this.sourceType = GraphContext.Current.GetGraphType(path.Substring(0, path.LastIndexOf('.')));
-				if (sourceType != null)
-					this.SourceProperty = sourceType.Properties[path.Substring(path.LastIndexOf('.') + 1)];
+				var sourceGraphType = GraphContext.Current.GetGraphType(path.Substring(0, path.LastIndexOf('.')));
+				if (sourceGraphType != null)
+				{
+					var sourceGraphProperty = sourceGraphType.Properties[path.Substring(path.LastIndexOf('.') + 1)];
+					if (sourceGraphProperty != null && sourceGraphProperty.IsStatic)
+					{
+						this.SourceProperty = sourceGraphProperty.Name;
+						this.SourceType = sourceGraphProperty.DeclaringType.Name;
+					}
+				}
 			}
 
 			// Raise an error if the specified path is not valid
@@ -55,28 +62,29 @@ namespace ExoRule.Validation
 		}
 
 		/// <summary>
+		/// Gets the name of the type that is the starting point for the source path.
+		/// </summary>
+		public string RootType { get; private set; }
+
+		/// <summary>
 		/// Gets the source path represented by the current instance.
 		/// </summary>
-		public string Path
-		{
-			get;
-			private set;
-		}
+		public string Path { get; private set; }
 
 		/// <summary>
 		/// Indicates whether the source represents a static property.
 		/// </summary>
-		public bool IsStatic
-		{
-			get;
-			private set;
-		}
+		public bool IsStatic { get; private set; }
 
-		public GraphProperty SourceProperty
-		{
-			get;
-			private set;
-		}
+		/// <summary>
+		/// Gets the name of the final property along the source path.
+		/// </summary>
+		public string SourceProperty { get;	private set; }
+
+		/// <summary>
+		/// Gets the name of the type that declares the final property along the source path.
+		/// </summary>
+		public string SourceType { get; private set; }
 
 		/// <summary>
 		/// Gets the underlying value of the property for the current source path.
@@ -86,7 +94,7 @@ namespace ExoRule.Validation
 		public object GetValue(GraphInstance root)
 		{
 			IGraphPropertySource source = GetSource(root);
-			return source == null ? null : source[SourceProperty.Name];
+			return source == null ? null : source[SourceProperty];
 		}
 
 		/// <summary>
@@ -108,7 +116,7 @@ namespace ExoRule.Validation
 				return false;
 
 			// Get the property off of the source to evaluate
-			GraphProperty property = source.Properties[SourceProperty.Name];
+			GraphProperty property = source.Properties[SourceProperty];
 
 			// If the property is a list, determine if the list has items
 			if (property is GraphReferenceProperty && property.IsList)
@@ -123,7 +131,7 @@ namespace ExoRule.Validation
 		{
 			// Return the source type for static paths
 			if (IsStatic)
-				return sourceType;
+				return GraphContext.Current.GetGraphType(SourceType);
 
 			// Otherwise, walk the source path to find the source instance
 			foreach (string step in sourcePath)
@@ -145,7 +153,7 @@ namespace ExoRule.Validation
 		public GraphInstanceList GetList(GraphInstance root)
 		{
 			IGraphPropertySource source = GetSource(root);
-			return source == null ? null : source.GetList(SourceProperty.Name);
+			return source == null ? null : source.GetList(SourceProperty);
 		}
 	}
 }

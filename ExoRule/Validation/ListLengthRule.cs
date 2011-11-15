@@ -14,26 +14,25 @@ namespace ExoRule.Validation
 	/// Applies conditions when the length of a list of a <see cref="GraphProperty"/> is
 	/// too short or long.
 	/// </summary>
-	[DataContract(Name = "listLength")]
 	public class ListLengthRule : PropertyRule
 	{
 		#region Fields
 
-		PathSource compareLengthSource;
+		PathSource compareSource;
 
 		#endregion
 
 		#region Constructors
 
-		public ListLengthRule(string rootType, string property, int staticLength, string compareLengthSource, CompareOperator op, Func<string> label, Func<string> compareLabel)
-			: this(rootType, property, staticLength, compareLengthSource, op, label, compareLabel, RuleInvocationType.PropertyChanged)
+		public ListLengthRule(string rootType, string property, int staticLength, string compareSource, CompareOperator op)
+			: this(rootType, property, staticLength, compareSource, op, RuleInvocationType.PropertyChanged)
 		{ }
 
-		public ListLengthRule(string rootType, string property, int staticLength, string compareLengthSource, CompareOperator op, Func<string> label, Func<string> compareLabel, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, staticLength, compareLengthSource, op, label, compareLabel), invocationTypes)
+		public ListLengthRule(string rootType, string property, int staticLength, string compareSource, CompareOperator op, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, staticLength, compareSource, op), invocationTypes)
 		{
 			this.StaticLength = staticLength;
-			this.CompareLengthSource = compareLengthSource;
+			this.CompareSource = compareSource;
 			this.CompareOperator = op;
 		}
 
@@ -41,25 +40,23 @@ namespace ExoRule.Validation
 
 		#region Properties
 
-		[DataMember(Name = "staticLength", EmitDefaultValue = false)]
 		public int StaticLength { get; private set; }
 
 		/// <summary>
 		/// The static or instance path of the property to compare to.
 		/// </summary>
-		[DataMember(Name = "compareLengthSource")]
-		public string CompareLengthSource
+		public string CompareSource
 		{
 			get
 			{
-				return compareLengthSource == null ? "" : compareLengthSource.Path;
+				return compareSource == null ? "" : compareSource.Path;
 			}
 			private set
 			{
 				if (!String.IsNullOrEmpty(value))
-					compareLengthSource = new PathSource(Property.DeclaringType, value);
+					compareSource = new PathSource(Property.DeclaringType, value);
 				else
-					compareLengthSource = null;
+					compareSource = null;
 			}
 		}
 
@@ -75,13 +72,13 @@ namespace ExoRule.Validation
 		/// <summary>
 		/// Indicates whether the compare source is static.
 		/// </summary>
-		public bool CompareLengthSourceIsStatic
+		public bool CompareSourceIsStatic
 		{
 			get
 			{
 				//return true when the compare property does not exist because we do not 
 				//want the code using this property tack a "this." on the front of the property path
-				return compareLengthSource == null ? true : compareLengthSource.IsStatic;
+				return compareSource == null ? true : compareSource.IsStatic;
 			}
 		}
 
@@ -89,7 +86,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int staticLength, string compareLengthSource, CompareOperator op, Func<string> label, Func<string> compareLabel)
+		static Error CreateError(string rootType, string property, int staticLength, string compareSource, CompareOperator op)
 		{
 			string message;
 			switch (op)
@@ -116,11 +113,16 @@ namespace ExoRule.Validation
 					throw new ArgumentException("Invalid comparison operator for list length rule");
 			}
 
+			// Get the comparison source
+			var source = new PathSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var sourceType = source.SourceType;
+			var sourceProperty = source.SourceProperty;
+
 			return new Error(
 				GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
 				(s) => s
-					.Replace("{property}", label())
-					.Replace("{compareSource}", staticLength >= 0 ? staticLength.ToString() : compareLabel()));
+					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{compareSource}", staticLength >= 0 ? staticLength.ToString() : GetLabel(sourceType, sourceProperty)));
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)
@@ -147,7 +149,7 @@ namespace ExoRule.Validation
 			}
 			else
 			{
-				object compareVal = compareLengthSource.GetValue(root);
+				object compareVal = compareSource.GetValue(root);
 				bool success = Int32.TryParse(compareVal.ToString(), out lengthToCompareAgainst);
 
 				//if it could not parse then this is not a valid integer property
@@ -157,14 +159,6 @@ namespace ExoRule.Validation
 
 			bool? result = CompareRule.Compare(root, items.Count, CompareOperator, lengthToCompareAgainst);
 			return !result.HasValue ? false : result.Value;
-		}
-
-		protected override string TypeName
-		{
-			get
-			{
-				return "listLength";
-			}
 		}
 
 		#endregion

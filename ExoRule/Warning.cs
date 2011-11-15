@@ -6,7 +6,6 @@ using System.Runtime.Serialization;
 
 namespace ExoRule
 {
-	[DataContract]
 	public class Warning : ConditionType
 	{
 		public Warning(string message)

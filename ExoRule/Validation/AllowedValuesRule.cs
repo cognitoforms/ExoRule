@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using ExoGraph;
 using System;
+using System.Collections.Generic;
 
 namespace ExoRule.Validation
 {
@@ -9,7 +10,6 @@ namespace ExoRule.Validation
 	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
 	/// not an allowed value.
 	/// </summary>
-	[DataContract(Name = "allowedValues")]
 	public class AllowedValuesRule : PropertyRule
 	{
 		#region Fields
@@ -20,14 +20,14 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public AllowedValuesRule(string rootType, string property, string source, Func<string> label)
-			: this(rootType, property, source, label, RuleInvocationType.PropertyChanged)
+		public AllowedValuesRule(string rootType, string property, string source)
+			: this(rootType, property, source, RuleInvocationType.PropertyChanged)
 		{
 			this.Source = source;
 		}
 
-		public AllowedValuesRule(string rootType, string property, string source, Func<string> label, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, label), invocationTypes, CompareRule.GetPredicates(rootType, property, source))
+		public AllowedValuesRule(string rootType, string property, string source, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property), invocationTypes, CompareRule.GetPredicates(rootType, property, source))
 		{
 			this.Source = source;
 		}
@@ -36,7 +36,6 @@ namespace ExoRule.Validation
 
 		#region Properties
 
-		[DataMember(Name = "source")]
 		public string Source
 		{
 			get
@@ -45,7 +44,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				source = new PathSource(Property.DeclaringType, value);
+				source = new PathSource(RootType, value);
 			}
 		}
 
@@ -61,11 +60,12 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, Func<string> label)
+		static Error CreateError(string rootType, string property)
 		{
 			return new Error(
 				GetErrorCode(rootType, property, "AllowedValues"),
-				"allowed-values", typeof(AllowedValuesRule), (s) => s.Replace("{property}", label()), null);
+				"allowed-values", typeof(AllowedValuesRule), 
+				(s) => s.Replace("{property}", GetLabel(rootType, property)), null);
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)
@@ -96,12 +96,19 @@ namespace ExoRule.Validation
 			}
 		}
 
-		protected override string TypeName
+		/// <summary>
+		/// Gets the set of allowed values for the specified instance and property.
+		/// </summary>
+		/// <param name="instance"></param>
+		/// <param name="property"></param>
+		/// <returns></returns>
+		public static IEnumerable<GraphInstance> GetAllowedValues(GraphInstance instance, GraphProperty property)
 		{
-			get
-			{
-				return "allowedValues";
-			}
+			var allowedValuesRule = Rule.GetRegisteredRules(property.DeclaringType).OfType<AllowedValuesRule>().Where(r => r.Property == property).FirstOrDefault();
+			if (allowedValuesRule == null)
+				return null;
+
+			return allowedValuesRule.source.GetList(instance);
 		}
 
 		#endregion

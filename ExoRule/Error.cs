@@ -6,7 +6,6 @@ using System.Runtime.Serialization;
 
 namespace ExoRule
 {
-	[DataContract]
 	public class Error : ConditionType
 	{
 		public Error(string message)
@@ -27,7 +26,6 @@ namespace ExoRule
 		}
 	}
 
-	[DataContract()]
 	public class Error<TRoot> : Error
 		where TRoot : class
 	{

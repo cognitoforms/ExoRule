@@ -6,7 +6,6 @@ using System.Runtime.Serialization;
 
 namespace ExoRule
 {
-	[DataContract]
 	public abstract class Permission : ConditionType
 	{
 		public Permission(string message, PermissionType permissionType, params ConditionTypeSet[] sets)
@@ -23,7 +22,6 @@ namespace ExoRule
 			: base(code, ConditionCategory.Permission, message, sourceType, translator, sets)
 		{ }
 
-		[DataMember(Name = "permissionType")]
 		string PermissionTypeString
 		{
 			get
@@ -35,11 +33,9 @@ namespace ExoRule
 
 		public PermissionType PermissionType { get; private set; }
 
-		[DataMember(Name = "isAllowed")]
 		public abstract bool IsAllowed { get; protected set; }
 	}
 
-	[DataContract]
 	public class DenyPermission : Permission 
 	{
 		public DenyPermission(string message, PermissionType permissionType)

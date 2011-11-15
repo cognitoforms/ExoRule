@@ -13,7 +13,6 @@ namespace ExoRule.Validation
 	/// <summary>
 	/// Abstract base for simple validation rules for properties in a model.
 	/// </summary>
-	[DataContract]
 	public abstract class PropertyRule : Rule
 	{
 		#region Fields
@@ -67,7 +66,6 @@ namespace ExoRule.Validation
 		/// <summary>
 		/// Text version of <see cref="Property"/> to support WCF serialization.
 		/// </summary>
-		[DataMember(Name = "property")]
 		string PropertyName
 		{
 			get
@@ -100,6 +98,16 @@ namespace ExoRule.Validation
 			return code;
 		}
 
+		/// <summary>
+		/// Gets the label for the specified property.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="property"></param>
+		protected static string GetLabel(string rootType, string property)
+		{
+			return GraphContext.Current.GetGraphType(rootType).Properties[property].Label;
+		}
+
 		protected internal override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
 		{
 			ConditionTypes.First().When(root.Instance, () => ConditionApplies(root), new string[] { Property.Name });
@@ -111,6 +119,12 @@ namespace ExoRule.Validation
 		/// <returns>true if <paramref name="root"/> should be associated with the <see cref="ConditionType"/></returns>
 		protected abstract bool ConditionApplies(GraphInstance root);
 
+		/// <summary>
+		/// Transforms attribute-based property validation information into condition types.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="converters"></param>
+		/// <returns></returns>
 		public static IEnumerable<ConditionType> InferConditionTypes(GraphType type, params Func<Attribute, ConditionType>[] converters)
 		{
 			List<ConditionType> conditionTypes = new List<ConditionType>();

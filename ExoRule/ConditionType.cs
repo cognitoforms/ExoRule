@@ -14,11 +14,6 @@ namespace ExoRule
 	/// relevant to an instance in a model, but not part of the domain data for the model.
 	/// </summary>
 	[Serializable]
-	[DataContract]
-	[KnownType(typeof(Warning))]
-	[KnownType(typeof(Error))]
-	[KnownType(typeof(Permission))]
-	[KnownType(typeof(DenyPermission))]
 	public abstract class ConditionType : IRuleProvider
 	{
 		#region Fields
@@ -75,7 +70,6 @@ namespace ExoRule
 
 		#region Properties
 
-		[DataMember(Name = "code")]
 		public string Code
 		{
 			get
@@ -112,7 +106,6 @@ namespace ExoRule
 			}
 		}
 
-		[DataMember(Name = "category")]
 		string CategoryString
 		{
 			get
@@ -130,7 +123,6 @@ namespace ExoRule
 			}
 		}
 
-		[DataMember(Name = "sets")]
 		string[] SetsString
 		{
 			get
@@ -143,7 +135,6 @@ namespace ExoRule
 			}
 		}
 
-		[DataMember(Name = "message")]
 		public string Message
 		{
 			get
@@ -156,7 +147,6 @@ namespace ExoRule
 			}
 		}
 
-		[DataMember(Name = "rule")]
 		public Rule ConditionRule { get; set; }
 
 		#endregion
