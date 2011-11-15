@@ -38,32 +38,20 @@ namespace ExoRule.DataAnnotations
 
 			PathSource comparePropPath = new PathSource(instance.Type, ComparisonPropertyName);
 
-			//Cannot perform comparison on a list property
-			if (!sourceProperty.IsList && !comparePropPath.SourceProperty.IsList)
+			object compareValue = comparePropPath.GetValue(instance);
+
+			int comparison = ((IComparable)compareValue).CompareTo(value);
+			switch (Operator)
 			{
-				// Get the current property value
-
-				object compareValue = comparePropPath.GetValue(instance);
-
-				int comparison = ((IComparable)compareValue).CompareTo(value);
-				switch (Operator)
-				{
-					case CompareOperator.Equal: return comparison == 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-					case CompareOperator.NotEqual: return comparison != 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-					case CompareOperator.GreaterThan: return comparison < 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-					case CompareOperator.GreaterThanEqual: return comparison <= 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-					case CompareOperator.LessThan: return comparison > 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-					case CompareOperator.LessThanEqual: return comparison >= 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
-				}
-
-				return null;
+				case CompareOperator.Equal: return comparison == 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				case CompareOperator.NotEqual: return comparison != 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				case CompareOperator.GreaterThan: return comparison < 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				case CompareOperator.GreaterThanEqual: return comparison <= 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				case CompareOperator.LessThan: return comparison > 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				case CompareOperator.LessThanEqual: return comparison >= 0 ? null : new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
 			}
-			// List Property
-			else
-			{
-				//if the property this annotation is applied to is a list, then this validation is not applicable
-				return null;
-			}
+
+			return null;
 		}
 
 		#endregion

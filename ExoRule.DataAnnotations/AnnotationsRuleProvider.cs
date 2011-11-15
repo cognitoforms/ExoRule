@@ -14,8 +14,6 @@ namespace ExoRule.DataAnnotations
 	{
 		#region Fields
 
-		static Regex labelRegex = new Regex(@"(^[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|$)|[A-Z][a-z]*)", RegexOptions.Singleline | RegexOptions.Compiled);
-
 		IEnumerable<Type> types;
 		List<Rule> rules;
 
@@ -46,18 +44,6 @@ namespace ExoRule.DataAnnotations
 		#endregion
 
 		#region Methods
-
-		/// <summary>
-		/// Gets a delegate to return the label of the specified property.
-		/// </summary>
-		/// <param name="property"></param>
-		/// <returns></returns>
-		Func<string> GetLabel(GraphProperty property)
-		{
-			DisplayAttribute displayAttribute = property.GetAttributes<DisplayAttribute>().FirstOrDefault();
-			string defaultLabel = labelRegex.Replace(property.Name, " $1").Substring(1);
-			return displayAttribute != null ? (Func<string>)(() => displayAttribute.GetName()) : () => defaultLabel;
-		}
 
 		/// <summary>
 		/// Gets a delagate to format the value of the specified property.
@@ -121,28 +107,25 @@ namespace ExoRule.DataAnnotations
 					// Process each instance property declared on the current type
 					foreach (var property in type.Properties.Where(property => property.DeclaringType == type && !property.IsStatic))
 					{
-						// Get the display label to use for validation error messages
-						Func<string> label = GetLabel(property);
-
 						// Required Attribute
 						foreach (var attr in property.GetAttributes<RequiredAttribute>().Take(1))
-							rules.Add(new RequiredRule(type.Name, property.Name, label));
+							rules.Add(new RequiredRule(type.Name, property.Name));
 
 						// String Length Attribute
 						foreach (var attr in property.GetAttributes<StringLengthAttribute>().Take(1))
-							rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength, label, (c) => c.ToString()));
+							rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength, (c) => c.ToString()));
 
 						// Range Attribute
 						foreach (var attr in property.GetAttributes<RangeAttribute>().Take(1))
-							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum, label, GetFormat<IComparable>(property)));
+							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum, GetFormat<IComparable>(property)));
 
 						//Compare Attribute
 						foreach (var attr in property.GetAttributes<CompareAttribute>().Take(1))
-							rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator, label, () => attr.ComparisonPropertyName));
+							rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator));
 
 						// ListLength Attribute
 						foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
-							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp, label, () => attr.LengthCompareProperty));
+							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
 
 						// Allowed Values Attribute
 						GraphReferenceProperty reference = property as GraphReferenceProperty;
@@ -153,7 +136,7 @@ namespace ExoRule.DataAnnotations
 								.Union(reference.PropertyType.GetAttributes<AllowedValuesAttribute>()
 								.Select(attr => attr.Source.Contains('.') ? attr.Source : reference.PropertyType.Name + '.' + attr.Source)
 								.Take(1)))
-								rules.Add(new AllowedValuesRule(type.Name, property.Name, source, label));
+								rules.Add(new AllowedValuesRule(type.Name, property.Name, source));
 						}
 					}
 				}
