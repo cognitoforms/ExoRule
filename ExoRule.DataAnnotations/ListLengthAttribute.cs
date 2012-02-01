@@ -49,7 +49,7 @@ namespace ExoRule.DataAnnotations
 			}
 			else
 			{
-				var lengthProp = new PathSource(instance.Type, LengthCompareProperty);
+				var lengthProp = new GraphSource(instance.Type, LengthCompareProperty);
 
 				// Get the integer length of the property.  If the property is not an integer return null
 				object lengthPropertyValue = lengthProp.GetValue(instance);

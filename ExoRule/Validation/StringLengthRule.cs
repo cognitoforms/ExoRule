@@ -18,12 +18,12 @@ namespace ExoRule.Validation
 	{
 		#region Constructors
 
-		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<int, string> format)
-			: this(rootType, property, minimum, maximum, format, RuleInvocationType.PropertyChanged)
+		public StringLengthRule(string rootType, string property, int minimum, int maximum)
+			: this(rootType, property, minimum, maximum, RuleInvocationType.PropertyChanged)
 		{ }
 
-		public StringLengthRule(string rootType, string property, int minimum, int maximum, Func<int, string> format, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum, format), invocationTypes)
+		public StringLengthRule(string rootType, string property, int minimum, int maximum, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, minimum, maximum), invocationTypes)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;
@@ -41,7 +41,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int minimum, int maximum, Func<int, string> format)
+		static Error CreateError(string rootType, string property, int minimum, int maximum)
 		{
 			string message;
 			if (minimum > 0 && maximum > 0)
@@ -57,8 +57,8 @@ namespace ExoRule.Validation
 				GetErrorCode(rootType, property, "StringLength"), message, typeof(StringLengthRule),
 				(s) => s
 					.Replace("{property}", GetLabel(rootType, property))
-					.Replace("{min}", format(minimum))
-					.Replace("{max}", format(maximum)), null);
+					.Replace("{min}", minimum.ToString())
+					.Replace("{max}", maximum.ToString()), null);
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)

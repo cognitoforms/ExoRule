@@ -14,7 +14,7 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		PathSource compareSource;
+		GraphSource compareSource;
 
 		#endregion
 
@@ -79,7 +79,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				compareSource = new PathSource(Property.DeclaringType, value);
+				compareSource = new GraphSource(Property.DeclaringType, value);
 			}
 		}
 
@@ -151,7 +151,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new PathSource(rootGraphType, compareSource);
+			var source = new GraphSource(rootGraphType, compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -165,19 +165,18 @@ namespace ExoRule.Validation
 
 		internal static string[] GetPredicates(string rootType, string property, string compareSource)
 		{
-			PathSource source = new PathSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			GraphSource source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
 			return source.IsStatic ? new string[] { property } : new string[] { property, compareSource };
 		}
 
 		/// <summary>
 		/// Determines whether the comparison conditions are met by the given source value and compare value.
 		/// </summary>
-		/// <param name="root">The root graph instance.</param>
 		/// <param name="sourceValue">The source value.</param>
 		/// <param name="compareOperator">The comparison operator.</param>
 		/// <param name="compareValue">The compare value.</param>
 		/// <returns>True if the comparison passes, false if the comparison fails.</returns>
-		protected internal static bool? Compare(GraphInstance root, object sourceValue, CompareOperator compareOperator, object compareValue)
+		protected internal static bool? Compare(object sourceValue, CompareOperator compareOperator, object compareValue)
 		{
 			if (sourceValue == null && compareValue == null)
 			{
@@ -213,7 +212,7 @@ namespace ExoRule.Validation
 		/// <returns></returns>
 		protected override bool ConditionApplies(GraphInstance root)
 		{
-			bool? result = Compare(root, root[Property], CompareOperator, compareSource.GetValue(root));
+			bool? result = Compare(root[Property], CompareOperator, compareSource.GetValue(root));
 			return result.HasValue && !result.Value;
 		}
 

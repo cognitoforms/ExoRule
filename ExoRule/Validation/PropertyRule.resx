@@ -222,6 +222,9 @@
   <data name="required-if-on-or-before" xml:space="preserve">
     <value>{property} is required when {compareSource} is on or before {compareValue}.</value>
   </data>
+  <data name="string-format" xml:space="preserve">
+    <value>{property} must be formatted as {formatDescription}.</value>
+  </data>
   <data name="string-length-at-least" xml:space="preserve">
     <value>{property} must be at least {min} characters.</value>
   </data>

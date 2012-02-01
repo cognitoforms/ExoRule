@@ -18,7 +18,7 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		PathSource compareSource;
+		GraphSource compareSource;
 
 		#endregion
 
@@ -54,7 +54,7 @@ namespace ExoRule.Validation
 			private set
 			{
 				if (!String.IsNullOrEmpty(value))
-					compareSource = new PathSource(Property.DeclaringType, value);
+					compareSource = new GraphSource(Property.DeclaringType, value);
 				else
 					compareSource = null;
 			}
@@ -114,7 +114,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new PathSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -157,7 +157,7 @@ namespace ExoRule.Validation
 					return false;
 			}
 
-			bool? result = CompareRule.Compare(root, items.Count, CompareOperator, lengthToCompareAgainst);
+			bool? result = CompareRule.Compare(items.Count, CompareOperator, lengthToCompareAgainst);
 			return !result.HasValue ? false : result.Value;
 		}
 

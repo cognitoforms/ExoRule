@@ -14,7 +14,7 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		PathSource source;
+		GraphSource source;
 
 		#endregion
 
@@ -44,7 +44,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				source = new PathSource(RootType, value);
+				source = new GraphSource(RootType, value);
 			}
 		}
 

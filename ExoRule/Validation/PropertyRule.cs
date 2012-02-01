@@ -108,6 +108,18 @@ namespace ExoRule.Validation
 			return GraphContext.Current.GetGraphType(rootType).Properties[property].Label;
 		}
 
+		/// <summary>
+		/// Formats the specified value based on the formatting associated with the specified property.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="property"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		protected static string Format(string rootType, string property, object value)
+		{
+			return ((GraphValueProperty)GraphContext.Current.GetGraphType(rootType).Properties[property]).FormatValue(value);
+		}
+
 		protected internal override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
 		{
 			ConditionTypes.First().When(root.Instance, () => ConditionApplies(root), new string[] { Property.Name });

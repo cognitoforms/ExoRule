@@ -10,6 +10,10 @@ using System.Reflection;
 
 namespace ExoRule.DataAnnotations
 {
+	/// <summary>
+	/// Automatically creates rules based on the presence of data annotation attributes
+	/// on properties of the specified graph types.
+	/// </summary>
 	public class AnnotationsRuleProvider : IRuleProvider
 	{
 		#region Fields
@@ -46,51 +50,6 @@ namespace ExoRule.DataAnnotations
 		#region Methods
 
 		/// <summary>
-		/// Gets a delagate to format the value of the specified property.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="property"></param>
-		/// <returns></returns>
-		Func<T, string> GetFormat<T>(GraphProperty property)
-		{
-			DisplayFormatAttribute formatAttribute = property.GetAttributes<DisplayFormatAttribute>().FirstOrDefault();
-			string formatCode = string.Empty;
-
-			if (formatAttribute != null && !string.IsNullOrWhiteSpace(formatAttribute.DataFormatString))
-			{
-				string formatString = formatAttribute.DataFormatString;
-
-				// Check for a named format
-				switch (formatAttribute.DataFormatString)
-				{
-					case "Currency":
-						formatCode = "{0:C}";
-						break;
-					case "Percent":
-						formatCode = "{0:P}";
-						break;
-					case "ShortDate":
-						formatCode = "{0:d}";
-						break;
-					case "LongDate":
-						formatCode = "{0:D}";
-						break;
-					case "ShortTime":
-						formatCode = "{0:t}";
-						break;
-					case "LongTime":
-						formatCode = "{0:T}";
-						break;
-					default:
-						formatCode = formatString;
-						break;
-				}				
-			}
-
-			return (Func<T, string>)((v) => string.Format(formatCode, v));
-		}
-
-		/// <summary>
 		/// Gets the set of precondition rules created by the provider.
 		/// </summary>
 		/// <param name="name"></param>
@@ -113,11 +72,11 @@ namespace ExoRule.DataAnnotations
 
 						// String Length Attribute
 						foreach (var attr in property.GetAttributes<StringLengthAttribute>().Take(1))
-							rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength, (c) => c.ToString()));
+							rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength));
 
 						// Range Attribute
 						foreach (var attr in property.GetAttributes<RangeAttribute>().Take(1))
-							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum, GetFormat<IComparable>(property)));
+							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum));
 
 						//Compare Attribute
 						foreach (var attr in property.GetAttributes<CompareAttribute>().Take(1))

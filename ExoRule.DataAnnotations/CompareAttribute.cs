@@ -36,7 +36,7 @@ namespace ExoRule.DataAnnotations
 			if (ComparisonPropertyName == null)
 				return null;
 
-			PathSource comparePropPath = new PathSource(instance.Type, ComparisonPropertyName);
+			GraphSource comparePropPath = new GraphSource(instance.Type, ComparisonPropertyName);
 
 			object compareValue = comparePropPath.GetValue(instance);
 

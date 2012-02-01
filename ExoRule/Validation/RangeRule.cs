@@ -17,12 +17,12 @@ namespace ExoRule.Validation
 	{
 		#region Constructors
 
-		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format)
-			: this(rootType, property, minimum, maximum, format, RuleInvocationType.PropertyChanged)
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum)
+			: this(rootType, property, minimum, maximum, RuleInvocationType.PropertyChanged)
 		{ }
 
-		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum, format), invocationTypes)
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, minimum, maximum), invocationTypes)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;
@@ -40,7 +40,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, IComparable minimum, IComparable maximum, Func<IComparable, string> format)
+		static Error CreateError(string rootType, string property, IComparable minimum, IComparable maximum)
 		{
 			bool isDate = minimum is DateTime || maximum is DateTime;
 			
@@ -58,8 +58,8 @@ namespace ExoRule.Validation
 				GetErrorCode(rootType, property, "Range"), message, typeof(RangeRule),
 				(s) => s
 					.Replace("{property}", GetLabel(rootType, property))
-					.Replace("{min}", minimum == null ? "" : format(minimum))
-					.Replace("{max}", maximum == null ? "" : format(maximum)), null);
+					.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
+					.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)

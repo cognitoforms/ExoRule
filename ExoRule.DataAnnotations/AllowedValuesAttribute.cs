@@ -20,7 +20,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 	protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 	{
 		var instance = GraphContext.Current.GetGraphInstance(validationContext.ObjectInstance);
-		var source = new PathSource(instance.Type, Source);
+		var source = new GraphSource(instance.Type, Source);
 		var property = instance.Type.Properties[validationContext.MemberName];
 
 		// Get the list of allowed values

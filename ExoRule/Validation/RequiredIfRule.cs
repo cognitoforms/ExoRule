@@ -14,23 +14,23 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		PathSource compareSource;
+		GraphSource compareSource;
 
 		#endregion
 
 		#region Constructors
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, params ConditionTypeSet[] sets)
-			: this(rootType, property, compareSource, compareOperator, compareValue, format, RuleInvocationType.PropertyChanged, sets)
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged, sets)
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error)
 			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.PropertyChanged, error)
 		{ }
 
-		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
 			: this(rootType, property, compareSource, compareOperator, compareValue, invocationTypes,
-				CreateError(rootType, property, compareSource, compareOperator, compareValue, format, sets))
+				CreateError(rootType, property, compareSource, compareOperator, compareValue, sets))
 		{ }
 
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, Error error)
@@ -55,7 +55,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				compareSource = new PathSource(Property.DeclaringType, value);
+				compareSource = new GraphSource(Property.DeclaringType, value);
 			}
 		}
 
@@ -92,7 +92,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Func<object, string> format, params ConditionTypeSet[] sets)
+		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, params ConditionTypeSet[] sets)
 		{
 			// Determine the appropriate error message
 			string message;
@@ -127,7 +127,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new PathSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -137,7 +137,7 @@ namespace ExoRule.Validation
 				(s) => s
 					.Replace("{property}", GetLabel(rootType, property))
 					.Replace("{compareSource}", GetLabel(sourceType, sourceProperty))
-					.Replace("{compareValue}", compareValue == null ? "" : format(compareValue)), sets);
+					.Replace("{compareValue}", compareValue == null ? "" : Format(sourceType, sourceProperty, compareValue)), sets);
 		}
 
 		protected override bool ConditionApplies(GraphInstance root)
@@ -152,7 +152,7 @@ namespace ExoRule.Validation
 				return CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root);
 
 			// Otherwise, perform a comparison of the compare source relative to the compare value
-			bool? result = CompareRule.Compare(root, compareSource.GetValue(root), CompareOperator, CompareValue);
+			bool? result = CompareRule.Compare(compareSource.GetValue(root), CompareOperator, CompareValue);
 			return result.HasValue && result.Value;
 		}
 
