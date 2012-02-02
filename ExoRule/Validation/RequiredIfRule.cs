@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
@@ -14,7 +14,7 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		GraphSource compareSource;
+		ModelSource compareSource;
 
 		#endregion
 
@@ -55,7 +55,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				compareSource = new GraphSource(Property.DeclaringType, value);
+				compareSource = new ModelSource(Property.DeclaringType, value);
 			}
 		}
 
@@ -127,7 +127,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -140,11 +140,11 @@ namespace ExoRule.Validation
 					.Replace("{compareValue}", compareValue == null ? "" : Format(sourceType, sourceProperty, compareValue)), sets);
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			// Exit immediately if the target property has a value
 			if (root[Property] != null ||
-				(Property is GraphReferenceProperty && Property.IsList && root.GetList((GraphReferenceProperty)Property).Count > 0))
+				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count > 0))
 				return false;
 
 			// If the value to compare is null, then evaluate whether the compare source has a value

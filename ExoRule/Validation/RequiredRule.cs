@@ -5,13 +5,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
+	/// Applies conditions when the value of a <see cref="ModelProperty"/> is
 	/// null or an empty list.
 	/// </summary>
 	public class RequiredRule : PropertyRule
@@ -42,19 +42,19 @@ namespace ExoRule.Validation
 		{
 			return new Error(
 				GetErrorCode(rootType, property, "Required"),
-				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", GraphContext.Current.GetGraphType(rootType).Properties[property].Label), sets);
+				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", ModelContext.Current.GetModelType(rootType).Properties[property].Label), sets);
 		}
 
 		/// <summary>
-		/// Determines whether the rule should attach its condition to the given <see cref="GraphInstance"/>.
+		/// Determines whether the rule should attach its condition to the given <see cref="ModelInstance"/>.
 		/// </summary>
-		/// <param name="root">The graph instance to evaluate the rule for.</param>
-		/// <returns>A boolean value indicating whether the state of the given <see cref="GraphInstance"/> violates the rule.</returns>
-		protected override bool ConditionApplies(GraphInstance root)
+		/// <param name="root">The model instance to evaluate the rule for.</param>
+		/// <returns>A boolean value indicating whether the state of the given <see cref="ModelInstance"/> violates the rule.</returns>
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			return 
 				root[Property] == null || 
-				(Property is GraphReferenceProperty && Property.IsList && root.GetList((GraphReferenceProperty)Property).Count == 0);
+				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count == 0);
 		}
 
 		#endregion

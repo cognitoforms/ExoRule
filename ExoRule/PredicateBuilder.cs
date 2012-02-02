@@ -6,7 +6,7 @@ using System.Collections;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using System.Linq;
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {

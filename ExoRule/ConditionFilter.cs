@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {
@@ -12,25 +12,25 @@ namespace ExoRule
     //public class ConditionFilter
     //{
     //    ConditionTypeSet conditionTypes;
-    //    GraphFilter graph;
+    //    ModelFilter model;
 
     //    /// <summary>
-    //    /// Creates a new <see cref="RuleConditionGraphFilter"/> instance.
+    //    /// Creates a new <see cref="RuleConditionModelFilter"/> instance.
     //    /// </summary>
-    //    /// <param name="graph"></param>
+    //    /// <param name="model"></param>
     //    /// <param name="errors"></param>
-    //    public ConditionFilter(ConditionTypeSet conditionTypes, GraphFilter graph)
+    //    public ConditionFilter(ConditionTypeSet conditionTypes, ModelFilter model)
     //    {
-    //        this.graph = graph;
+    //        this.model = model;
     //        this.conditionTypes = conditionTypes;
 
-    //        graph.Changed += graph_Changed;
+    //        model.Changed += model_Changed;
     //    }
 
     //    /// <summary>
     //    /// Determines whether the specified condition should be included in the filter
     //    /// based on whether the error is in the set of errors tracked by the filter and
-    //    /// the join points are on at least one object in the graph the filter is assigned to.
+    //    /// the join points are on at least one object in the model the filter is assigned to.
     //    /// </summary>
     //    /// <param name="condition"></param>
     //    /// <returns></returns>
@@ -40,10 +40,10 @@ namespace ExoRule
     //        if (!conditionTypes.ContainsKey(condition.Error))
     //            return false;
 
-    //        // Then check the graph
+    //        // Then check the model
     //        foreach (RuleConditionJoinPoint joinPoint in condition.JoinPoints)
     //        {
-    //            if (joinPoint.ErrorObject is IRoot && graph.IsInGraph((IRoot)joinPoint.ErrorObject))
+    //            if (joinPoint.ErrorObject is IRoot && model.IsInModel((IRoot)joinPoint.ErrorObject))
     //                return true;
     //        }
 
@@ -52,11 +52,11 @@ namespace ExoRule
     //    }
 
     //    /// <summary>
-    //    /// Updates the condition filter based on changes to the object graph.
+    //    /// Updates the condition filter based on changes to the object model.
     //    /// </summary>
     //    /// <param name="sender"></param>
     //    /// <param name="e"></param>
-    //    void graph_Changed(object sender, GraphFilterChangedEventArgs e)
+    //    void model_Changed(object sender, ModelFilterChangedEventArgs e)
     //    {
     //        Reset();
     //    }
@@ -211,11 +211,11 @@ namespace ExoRule
     //        if (hasPendingChanges)
     //            return;
 
-    //        //Defer change notifications due to graph changes until they are complete
-    //        if (GraphChangeScope.Current.IsActive)
+    //        //Defer change notifications due to model changes until they are complete
+    //        if (ModelChangeScope.Current.IsActive)
     //        {
     //            hasPendingChanges = true;
-    //            GraphChangeScope.Current.Exited += new GraphChangeScopeExitedHandler(scope_Exited);
+    //            ModelChangeScope.Current.Exited += new ModelChangeScopeExitedHandler(scope_Exited);
     //        }
 
     //        // Otherwise, immediately raise the change event
@@ -224,11 +224,11 @@ namespace ExoRule
     //    }
 
     //    /// <summary>
-    //    /// Raises deferred change notifications when the last graph change is complete.
+    //    /// Raises deferred change notifications when the last model change is complete.
     //    /// </summary>
     //    /// <param name="sender"></param>
     //    /// <param name="e"></param>
-    //    void scope_Exited(object sender, GraphChangeScopeExitedEventArgs e)
+    //    void scope_Exited(object sender, ModelChangeScopeExitedEventArgs e)
     //    {
     //        hasPendingChanges = false;
     //        RaiseOnChanged();
@@ -265,7 +265,7 @@ namespace ExoRule
     //            removed.JoinPoints.CollectionChanged -= new NotifyCollectionChangedEventHandler(JoinPoints_CollectionChanged);
     //        conditions = null;
 
-    //        graph.Changed -= new GraphFilterChangedEventHandler(graph_Changed);
+    //        model.Changed -= new ModelFilterChangedEventHandler(model_Changed);
     //    }
 
     //    #endregion

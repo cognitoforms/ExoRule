@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
@@ -57,7 +57,7 @@ namespace ExoRule.Validation
 		/// The <see cref="Property"/> representing the property that this rule
 		/// will depend on and that any <see cref="ConditionTarget"/>s will target.
 		/// </summary>
-		public GraphProperty Property
+		public ModelProperty Property
 		{
 			get
 			{
@@ -92,7 +92,7 @@ namespace ExoRule.Validation
 		/// <param name="property"></param>
 		protected static string GetLabel(string rootType, string property)
 		{
-			return GraphContext.Current.GetGraphType(rootType).Properties[property].Label;
+			return ModelContext.Current.GetModelType(rootType).Properties[property].Label;
 		}
 
 		/// <summary>
@@ -104,10 +104,10 @@ namespace ExoRule.Validation
 		/// <returns></returns>
 		protected static string Format(string rootType, string property, object value)
 		{
-			return ((GraphValueProperty)GraphContext.Current.GetGraphType(rootType).Properties[property]).FormatValue(value);
+			return ((ModelValueProperty)ModelContext.Current.GetModelType(rootType).Properties[property]).FormatValue(value);
 		}
 
-		protected internal override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
+		protected internal override void OnInvoke(ModelInstance root, ModelEvent modelEvent)
 		{
 			ConditionTypes.First().When(root.Instance, () => ConditionApplies(root), new string[] { Property.Name });
 		}
@@ -116,7 +116,7 @@ namespace ExoRule.Validation
 		/// Overridden in subclasses to determine if the <see cref="ConditionType"/> applies.
 		/// </summary>
 		/// <returns>true if <paramref name="root"/> should be associated with the <see cref="ConditionType"/></returns>
-		protected abstract bool ConditionApplies(GraphInstance root);
+		protected abstract bool ConditionApplies(ModelInstance root);
 
 		#endregion
 	}

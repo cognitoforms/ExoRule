@@ -5,13 +5,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
+	/// Applies conditions when the value of a <see cref="ModelProperty"/> is
 	/// too short or long.
 	/// </summary>
 	public class StringLengthRule : PropertyRule
@@ -61,7 +61,7 @@ namespace ExoRule.Validation
 					.Replace("{max}", maximum.ToString()), null);
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			object value = root[Property];
 

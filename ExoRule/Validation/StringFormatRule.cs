@@ -6,13 +6,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the value of a <see cref="GraphProperty"/> is not in the correct format.
+	/// Applies conditions when the value of a <see cref="ModelProperty"/> is not in the correct format.
 	/// </summary>
 	public class StringFormatRule : PropertyRule
 	{
@@ -79,7 +79,7 @@ namespace ExoRule.Validation
 					.Replace("{formatDescription}", formatDescription()));
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			// First, get the string value to validate
 			var value = root[Property] as string;

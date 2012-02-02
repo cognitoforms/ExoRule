@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Collections;
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {
@@ -82,7 +82,7 @@ namespace ExoRule
 		public void AddTarget(object target, params string[] properties)
 		{
 			// Get the root target instance
-			GraphInstance root = GraphContext.Current.GetGraphInstance(target);
+			ModelInstance root = ModelContext.Current.GetModelInstance(target);
 
 			// Set the properties to an empty array if null
 			if (properties == null)
@@ -98,11 +98,11 @@ namespace ExoRule
 				// Process each property path to build up the condition sources
 				foreach (string property in properties)
 				{
-					IEnumerable<GraphInstance> instances = new GraphInstance[] { root };
+					IEnumerable<ModelInstance> instances = new ModelInstance[] { root };
 					foreach (var step in property.Split('.'))
 					{
 						// Create condition targets for all instances for the current step along the path
-						foreach (GraphInstance instance in instances)
+						foreach (ModelInstance instance in instances)
 						{
 							ConditionTarget conditionTarget = targets.FirstOrDefault(ct => ct.Target == instance);
 							if (conditionTarget == null)
@@ -118,22 +118,22 @@ namespace ExoRule
 						string currentStep = step;
 
 						// Move down the path by getting the set of child instances
-						instances = instances.SelectMany<GraphInstance, GraphInstance>(instance =>
+						instances = instances.SelectMany<ModelInstance, ModelInstance>(instance =>
 						{
 							// Get the reference property for the current step
-							GraphReferenceProperty reference = instance.Type.Properties[currentStep] as GraphReferenceProperty;
+							ModelReferenceProperty reference = instance.Type.Properties[currentStep] as ModelReferenceProperty;
 
 							// Return no instances if a reference property with the specified name could not be found
 							if (reference == null)
-								return new GraphInstance[0];
+								return new ModelInstance[0];
 
 							// Get the list of child instances for the current step
 							if (reference.IsList)
 								return instance.GetList(reference);
 							else
 							{
-								GraphInstance child = instance.GetReference(reference);
-								return child == null ? new GraphInstance[0] : new GraphInstance[] { child };
+								ModelInstance child = instance.GetReference(reference);
+								return child == null ? new ModelInstance[0] : new ModelInstance[] { child };
 							}
 						});
 					}
@@ -142,28 +142,28 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="GraphInstance"/>.
+		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="ModelInstance"/>.
 		/// </summary>
 		/// <param name="instance"></param>
 		/// <returns></returns>
-		public static IEnumerable<Condition> GetConditions(GraphInstance instance)
+		public static IEnumerable<Condition> GetConditions(ModelInstance instance)
 		{
 			return instance.GetExtension<RuleManager>().GetConditions();
 		}
 
 		/// <summary>
-		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="GraphInstance"/>.
+		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="ModelInstance"/>.
 		/// </summary>
 		/// <param name="instance"></param>
 		/// <returns></returns>
 		public static IEnumerable<Condition> GetConditions(object instance)
 		{
-			GraphInstance graphInstance = GraphContext.Current.GetGraphInstance(instance);
+			ModelInstance modelInstance = ModelContext.Current.GetModelInstance(instance);
 
 			if (instance == null)
-				throw new ArgumentException("Specified instance is not a valid GraphInstance");
+				throw new ArgumentException("Specified instance is not a valid ModelInstance");
 
-			return graphInstance.GetExtension<RuleManager>().GetConditions();
+			return modelInstance.GetExtension<RuleManager>().GetConditions();
 		}
 
 		/// <summary>

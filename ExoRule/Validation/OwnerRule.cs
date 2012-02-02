@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
@@ -30,14 +30,14 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		protected internal override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
+		protected internal override void OnInvoke(ModelInstance root, ModelEvent modelEvent)
 		{
 			// Marks the instance as pending delete if an owner property is set to null.
-			if (Property is GraphReferenceProperty && !Property.IsList)
-				root.IsPendingDelete = root.GetReference((GraphReferenceProperty)Property) == null;
+			if (Property is ModelReferenceProperty && !Property.IsList)
+				root.IsPendingDelete = root.GetReference((ModelReferenceProperty)Property) == null;
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			throw new NotSupportedException();
 		}

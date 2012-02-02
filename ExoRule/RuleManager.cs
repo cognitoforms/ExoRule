@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {
 	/// <summary>
-	/// Tracks rule state for each <see cref="GraphInstance"/>.
+	/// Tracks rule state for each <see cref="ModelInstance"/>.
 	/// </summary>
 	internal class RuleManager
 	{
@@ -50,7 +50,7 @@ namespace ExoRule
 			return conditions.Values.Select(target => target.Condition).Distinct();
 		}
 
-		internal void RunPendingPropertyGetRules(GraphInstance instance, Func<GraphProperty, bool> when)
+		internal void RunPendingPropertyGetRules(ModelInstance instance, Func<ModelProperty, bool> when)
 		{
 			// First run all rules for return values associated with properties that have not yet been accessed
 			foreach (Rule rule in instance.GetRules()

@@ -99,9 +99,9 @@
     <Compile Include="Warning.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoGraph.csproj">
+    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoModel.csproj">
       <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
-      <Name>ExoGraph</Name>
+      <Name>ExoModel</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

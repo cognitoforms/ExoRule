@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections;
-using ExoGraph;
+using ExoModel;
 using System.Runtime.Serialization;
 using System.Linq.Expressions;
 
@@ -29,7 +29,7 @@ namespace ExoRule
 		/// <summary>
 		/// Creates a new rule instance.
 		/// </summary>
-		/// <param name="rootType">The root <see cref="GraphType"/> the rule is for</param>
+		/// <param name="rootType">The root <see cref="ModelType"/> the rule is for</param>
 		/// <param name="name"></param>
 		/// <param name="predicates"></param>
 		public Rule(string rootType, string name, params string[] predicates)
@@ -39,7 +39,7 @@ namespace ExoRule
 		/// <summary>
 		/// Creates a new rule instance.
 		/// </summary>
-		/// <param name="rootType">The root <see cref="GraphType"/> the rule is for</param>
+		/// <param name="rootType">The root <see cref="ModelType"/> the rule is for</param>
 		/// <param name="name"></param>
 		/// <param name="invocationTypes"></param>
 		/// <param name="predicates"></param>
@@ -50,7 +50,7 @@ namespace ExoRule
 		/// <summary>
 		/// Creates a new rule instance.
 		/// </summary>
-		/// <param name="rootType">The root <see cref="GraphType"/> the rule is for</param>
+		/// <param name="rootType">The root <see cref="ModelType"/> the rule is for</param>
 		/// <param name="name"></param>
 		/// <param name="invocationTypes"></param>
 		/// <param name="predicates"></param>
@@ -79,13 +79,13 @@ namespace ExoRule
 		public string Name { get; private set; }
 
 		/// <summary>
-		/// Gets the root <see cref="GraphType"/> of the rule.
+		/// Gets the root <see cref="ModelType"/> of the rule.
 		/// </summary>
-		public virtual GraphType RootType
+		public virtual ModelType RootType
 		{
 			get
 			{
-				return GraphContext.Current.GetGraphType(rootType);
+				return ModelContext.Current.GetModelType(rootType);
 			}
 		}
 
@@ -111,7 +111,7 @@ namespace ExoRule
 
 		/// <summary>
 		/// Gets the set of <see cref="ConditionType"/> instances the current rule is responsible
-		/// for associating with instances in the graph.
+		/// for associating with instances in the model.
 		/// </summary>
 		public IEnumerable<ConditionType> ConditionTypes
 		{
@@ -224,29 +224,29 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Gets the set of rules registered for the specified <see cref="GraphType"/>.
+		/// Gets the set of rules registered for the specified <see cref="ModelType"/>.
 		/// </summary>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		public static IEnumerable<Rule> GetRegisteredRules(GraphType type)
+		public static IEnumerable<Rule> GetRegisteredRules(ModelType type)
 		{
 			return type.GetExtension<List<Rule>>();
 		}
 
 		/// <summary>
-		/// Invokes the rule on the specified <see cref="GraphInstance"/> as a result
-		/// of the specified triggering <see cref="GraphEvent"/>
+		/// Invokes the rule on the specified <see cref="ModelInstance"/> as a result
+		/// of the specified triggering <see cref="ModelEvent"/>
 		/// </summary>
 		/// <param name="root"></param>
-		/// <param name="graphEvent"></param>
-		internal void Invoke(GraphInstance root, GraphEvent graphEvent)
+		/// <param name="modelEvent"></param>
+		internal void Invoke(ModelInstance root, ModelEvent modelEvent)
 		{
 			try
 			{
 				if (BeforeInvoke != null)
 					BeforeInvoke(this, EventArgs.Empty);
 
-				GraphEventScope.Perform(() => OnInvoke(root, graphEvent));
+				ModelEventScope.Perform(() => OnInvoke(root, modelEvent));
 			}
 			finally
 			{
@@ -256,15 +256,15 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Invokes the rule on the specified <see cref="GraphInstance"/> as a result
-		/// of the specified triggering <see cref="GraphEvent"/>
+		/// Invokes the rule on the specified <see cref="ModelInstance"/> as a result
+		/// of the specified triggering <see cref="ModelEvent"/>
 		/// </summary>
 		/// <param name="root"></param>
-		/// <param name="graphEvent"></param>
-		internal protected abstract void OnInvoke(GraphInstance root, GraphEvent graphEvent);
+		/// <param name="modelEvent"></param>
+		internal protected abstract void OnInvoke(ModelInstance root, ModelEvent modelEvent);
 
 		/// <summary>
-		/// Registers the rule with the current <see cref="GraphContext"/>.
+		/// Registers the rule with the current <see cref="ModelContext"/>.
 		/// </summary>
 		public void Register()
 		{
@@ -276,11 +276,11 @@ namespace ExoRule
 			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
 				SetPredicates(GetPredicates());
 
-			// Track the rule registration for the root graph type
+			// Track the rule registration for the root model type
 			List<Rule> rules = RootType.GetExtension<List<Rule>>();
 			rules.Add(this);
 
-			// Do not perform graph type event registration if the rule is not supposed to execute on the server
+			// Do not perform model type event registration if the rule is not supposed to execute on the server
 			if ((ExecutionLocation & RuleExecutionLocation.Server) == 0)
 				return;
 
@@ -362,8 +362,8 @@ namespace ExoRule
 								// Mark the rule state as requiring invocation
 								manager.SetPendingInvocation(this, true);
 
-								// Invoke the rule when the last graph event scope exits
-								GraphEventScope.OnExit(() =>
+								// Invoke the rule when the last model event scope exits
+								ModelEventScope.OnExit(() =>
 								{
 									// Mark the rule state as no longer requiring invocation
 									manager.SetPendingInvocation(this, false);
@@ -457,7 +457,7 @@ namespace ExoRule
 		}
 
 		internal Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates)
-			: base(rootType ?? GraphContext.Current.GetGraphType<TRoot>().Name, name, invocationTypes, predicates)
+			: base(rootType ?? ModelContext.Current.GetModelType<TRoot>().Name, name, invocationTypes, predicates)
 		{ }
 
 		#endregion
@@ -475,13 +475,13 @@ namespace ExoRule
 		public Action<TRoot> Action { get; private set; }
 
 		/// <summary>
-		/// Gets the root <see cref="GraphType"/> of the rule.
+		/// Gets the root <see cref="ModelType"/> of the rule.
 		/// </summary>
-		public override GraphType RootType
+		public override ModelType RootType
 		{
 			get
 			{
-				return GraphContext.Current.GetGraphType<TRoot>();
+				return ModelContext.Current.GetModelType<TRoot>();
 			}
 		}
 
@@ -559,7 +559,7 @@ namespace ExoRule
 
 		protected override string[] GetPredicates()
 		{
-			GraphPath path;
+			ModelPath path;
 			return PredicateBuilder
 				.GetPredicates(Action.Method, method => Rule<TRoot>.PredicateFilter(Action.Method, method), (InvocationTypes | RuleInvocationType.PropertyGet) > 0)
 				.Where(predicate => RootType.TryGetPath(predicate.StartsWith("return ") ? predicate.Substring(7) : predicate, out path))
@@ -581,11 +581,11 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Invokes the action for the current rule on the specified <see cref="GraphInstance"/>.
+		/// Invokes the action for the current rule on the specified <see cref="ModelInstance"/>.
 		/// </summary>
 		/// <param name="root"></param>
-		/// <param name="graphEvent"></param>
-		internal protected override void OnInvoke(GraphInstance root, GraphEvent graphEvent)
+		/// <param name="modelEvent"></param>
+		internal protected override void OnInvoke(ModelInstance root, ModelEvent modelEvent)
 		{
 			Action((TRoot)root.Instance);
 		}
@@ -639,7 +639,7 @@ namespace ExoRule
 			: base(typeof(TRule).Name, 0, null, new string[] {})
 		{ }
 
-		void OnInvoke(GraphInstance instance, TEvent e)
+		void OnInvoke(ModelInstance instance, TEvent e)
 		{
 			OnInvoke((TRoot)instance.Instance, e);
 		}

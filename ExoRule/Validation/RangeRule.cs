@@ -5,13 +5,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the value of a <see cref="GraphProperty"/> is not within a specified range.
+	/// Applies conditions when the value of a <see cref="ModelProperty"/> is not within a specified range.
 	/// </summary>
 	public class RangeRule : PropertyRule
 	{
@@ -62,7 +62,7 @@ namespace ExoRule.Validation
 					.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			object value = root.Instance.GetType().GetProperty(Property.Name).GetValue(root.Instance, null);
 

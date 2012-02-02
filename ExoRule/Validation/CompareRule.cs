@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
@@ -14,7 +14,7 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		GraphSource compareSource;
+		ModelSource compareSource;
 
 		#endregion
 
@@ -45,11 +45,11 @@ namespace ExoRule.Validation
 		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
 			: base(rootType, property, CreateError(rootType, property, compareSource, compareOperator), invocationTypes, GetPredicates(rootType, property, compareSource))
 		{
-			// Get the graph property from the base class
-			GraphProperty p = Property;
+			// Get the model property from the base class
+			ModelProperty p = Property;
 
 			// Verify that the target property is supported by the rule
-			if (p is GraphReferenceProperty)
+			if (p is ModelReferenceProperty)
 			{
 				if (p.IsList)
 					throw new ArgumentException("The CompareRule does not support comparing list properties.");
@@ -57,7 +57,7 @@ namespace ExoRule.Validation
 				if (compareOperator != CompareOperator.Equal && compareOperator != CompareOperator.NotEqual)
 					throw new ArgumentException("The CompareRule only supports the Equal and NotEqual operators for reference properties.");
 			}
-			else if (!typeof(IComparable).IsAssignableFrom(((GraphValueProperty)p).PropertyType))
+			else if (!typeof(IComparable).IsAssignableFrom(((ModelValueProperty)p).PropertyType))
 				throw new ArgumentException("The CompareRule only supports value properties that implement IComparable.");
 
 			this.CompareSource = compareSource;
@@ -79,7 +79,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				compareSource = new GraphSource(Property.DeclaringType, value);
+				compareSource = new ModelSource(Property.DeclaringType, value);
 			}
 		}
 
@@ -123,9 +123,9 @@ namespace ExoRule.Validation
 		{
 			// Determine the appropriate error message
 			string message;
-			var rootGraphType = GraphContext.Current.GetGraphType(rootType);
-			var p = rootGraphType.Properties[property];
-			bool isDate = p is GraphValueProperty && ((GraphValueProperty)p).PropertyType == typeof(DateTime);
+			var rootModelType = ModelContext.Current.GetModelType(rootType);
+			var p = rootModelType.Properties[property];
+			bool isDate = p is ModelValueProperty && ((ModelValueProperty)p).PropertyType == typeof(DateTime);
 			switch (compareOperator)
 			{
 				case CompareOperator.Equal:
@@ -151,7 +151,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new GraphSource(rootGraphType, compareSource);
+			var source = new ModelSource(rootModelType, compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -165,7 +165,7 @@ namespace ExoRule.Validation
 
 		internal static string[] GetPredicates(string rootType, string property, string compareSource)
 		{
-			GraphSource source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			ModelSource source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
 			return source.IsStatic ? new string[] { property } : new string[] { property, compareSource };
 		}
 
@@ -210,7 +210,7 @@ namespace ExoRule.Validation
 		/// </summary>
 		/// <param name="root"></param>
 		/// <returns></returns>
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			bool? result = Compare(root[Property], CompareOperator, compareSource.GetValue(root));
 			return result.HasValue && !result.Value;

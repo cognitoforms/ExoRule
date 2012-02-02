@@ -2,51 +2,51 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {
 	public static class Extensions
 	{
 		/// <summary>
-		/// Gets the <see cref="Type"/> of event registered with the specified name on the current <see cref="GraphType"/>.
+		/// Gets the <see cref="Type"/> of event registered with the specified name on the current <see cref="ModelType"/>.
 		/// </summary>
-		/// <param name="graphType"></param>
+		/// <param name="modelType"></param>
 		/// <param name="eventName"></param>
 		/// <returns></returns>
-		public static Type GetEventType(this GraphType graphType, string eventName)
+		public static Type GetEventType(this ModelType modelType, string eventName)
 		{
 			Type eventType = null;
-			while (graphType != null)
+			while (modelType != null)
 			{
-				graphType.GetExtension<Events>().TryGetValue(eventName, out eventType);
+				modelType.GetExtension<Events>().TryGetValue(eventName, out eventType);
 				if (eventType != null)
 					return eventType;
-				graphType = graphType.BaseType;
+				modelType = modelType.BaseType;
 			}
 			return eventType;
 		}
 
 		/// <summary>
-		/// Gets the names of all events registered for the current <see cref="GraphType"/>.
+		/// Gets the names of all events registered for the current <see cref="ModelType"/>.
 		/// </summary>
-		/// <param name="graphType"></param>
+		/// <param name="modelType"></param>
 		/// <returns></returns>
-		public static IEnumerable<string> GetEvents(this GraphType graphType)
+		public static IEnumerable<string> GetEvents(this ModelType modelType)
 		{
-			return graphType.GetExtension<Events>().Keys;
+			return modelType.GetExtension<Events>().Keys;
 		}
 
 		/// <summary>
-		/// Registers an event type with the specified name on the current <see cref="GraphType"/>.
+		/// Registers an event type with the specified name on the current <see cref="ModelType"/>.
 		/// </summary>
-		/// <param name="graphType"></param>
+		/// <param name="modelType"></param>
 		/// <param name="eventName"></param>
 		/// <param name="eventType"></param>
-		public static void Subscribe<TEvent>(this GraphType graphType, string eventName, GraphType.CustomEvent<TEvent> handler)
+		public static void Subscribe<TEvent>(this ModelType modelType, string eventName, ModelType.CustomEvent<TEvent> handler)
 		{
-			graphType.GetExtension<Events>()[eventName] = typeof(TEvent);
-			graphType.Subscribe<TEvent>(handler);
+			modelType.GetExtension<Events>()[eventName] = typeof(TEvent);
+			modelType.Subscribe<TEvent>(handler);
 		}
 
 		class Events : Dictionary<string, Type>
@@ -57,7 +57,7 @@ namespace ExoRule
 		/// </summary>
 		/// <param name="instance"></param>
 		/// <returns></returns>
-		public static IEnumerable<Rule> GetRules(this GraphInstance instance)
+		public static IEnumerable<Rule> GetRules(this ModelInstance instance)
 		{
 			return instance.Type.GetAncestorsInclusive().SelectMany(t => Rule.GetRegisteredRules(t));
 		}
@@ -66,7 +66,7 @@ namespace ExoRule
 		/// Runs all property get rules pending invocation for the specified instance.
 		/// </summary>
 		/// <param name="instance"></param>
-		public static void RunPendingPropertyGetRules(this GraphInstance instance, Func<GraphProperty, bool> when)
+		public static void RunPendingPropertyGetRules(this ModelInstance instance, Func<ModelProperty, bool> when)
 		{
 			instance.GetExtension<RuleManager>().RunPendingPropertyGetRules(instance, when);
 		}
@@ -75,7 +75,7 @@ namespace ExoRule
 		/// Runs all property get rules pending invocation for the specified instance.
 		/// </summary>
 		/// <param name="instance"></param>
-		public static void RunPropertyGetRules(this GraphInstance instance, Func<GraphProperty, bool> when)
+		public static void RunPropertyGetRules(this ModelInstance instance, Func<ModelProperty, bool> when)
 		{
 			foreach (Rule rule in instance.GetRules().Where(rule => (rule.InvocationTypes & RuleInvocationType.PropertyGet) > 0 && rule.ReturnValues.Select(p => rule.RootType.Properties[p]).Any(when)))
 				rule.Invoke(instance, null);

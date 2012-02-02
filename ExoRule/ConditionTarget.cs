@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text; 
-using ExoGraph;
+using ExoModel;
 
 namespace ExoRule
 {
@@ -14,7 +14,7 @@ namespace ExoRule
 		WeakReference target;
 		IEnumerable<string> properties;
 
-		internal ConditionTarget(Condition condition, GraphInstance target, params string[] properties)
+		internal ConditionTarget(Condition condition, ModelInstance target, params string[] properties)
 		{
 			this.Condition = condition;
 			this.target = new WeakReference(target);
@@ -24,11 +24,11 @@ namespace ExoRule
 
 		public Condition Condition { get; private set; }
 
-		public GraphInstance Target
+		public ModelInstance Target
 		{
 			get
 			{
-				return (GraphInstance)(target.IsAlive ? target.Target : null);
+				return (ModelInstance)(target.IsAlive ? target.Target : null);
 			}
 		}
 

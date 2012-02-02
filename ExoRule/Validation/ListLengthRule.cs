@@ -5,20 +5,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using ExoRule;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the length of a list of a <see cref="GraphProperty"/> is
+	/// Applies conditions when the length of a list of a <see cref="ModelProperty"/> is
 	/// too short or long.
 	/// </summary>
 	public class ListLengthRule : PropertyRule
 	{
 		#region Fields
 
-		GraphSource compareSource;
+		ModelSource compareSource;
 
 		#endregion
 
@@ -54,7 +54,7 @@ namespace ExoRule.Validation
 			private set
 			{
 				if (!String.IsNullOrEmpty(value))
-					compareSource = new GraphSource(Property.DeclaringType, value);
+					compareSource = new ModelSource(Property.DeclaringType, value);
 				else
 					compareSource = null;
 			}
@@ -114,7 +114,7 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new GraphSource(GraphContext.Current.GetGraphType(rootType), compareSource);
+			var source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
 			var sourceType = source.SourceType;
 			var sourceProperty = source.SourceProperty;
 
@@ -125,7 +125,7 @@ namespace ExoRule.Validation
 					.Replace("{compareSource}", staticLength >= 0 ? staticLength.ToString() : GetLabel(sourceType, sourceProperty)));
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			//if the Property is not a list then this rule cannot apply
 			if (!Property.IsList)
@@ -134,8 +134,8 @@ namespace ExoRule.Validation
 			//value should be the list you are comparing against
 			object value = root[Property];
 
-			//get the exograph list representation
-			GraphInstanceList items = root.GetList((GraphReferenceProperty)Property);
+			//get the exomodel list representation
+			ModelInstanceList items = root.GetList((ModelReferenceProperty)Property);
 
 			if (value == null)
 				return false;

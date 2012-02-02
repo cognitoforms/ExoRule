@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 using System.Runtime.Serialization;
 using System.Resources;
 
@@ -20,7 +20,7 @@ namespace ExoRule
 
 		static IEnumerable<ConditionType> Empty = new List<ConditionType>();
 		static Dictionary<string, ConditionType> conditionTypes = new Dictionary<string, ConditionType>();
-		static Dictionary<string, List<ConditionType>> conditionTypesByGraphType = new Dictionary<string, List<ConditionType>>();
+		static Dictionary<string, List<ConditionType>> conditionTypesByModelType = new Dictionary<string, List<ConditionType>>();
 		static Dictionary<Type, ResourceManager> resources = new Dictionary<Type, ResourceManager>();
 
 		string code;
@@ -135,13 +135,13 @@ namespace ExoRule
 			if (properties == null)
 				properties = predicates;
 
-			// Remember which conditions are associated with this graph type
-			GraphType graphType = GraphContext.Current.GetGraphType(typeof(TRoot));
+			// Remember which conditions are associated with this model type
+			ModelType modelType = ModelContext.Current.GetModelType(typeof(TRoot));
 			List<ConditionType> conditions;
-			if (!conditionTypesByGraphType.TryGetValue(graphType.Name, out conditions))
+			if (!conditionTypesByModelType.TryGetValue(modelType.Name, out conditions))
 			{
 				conditions = new List<ConditionType>();
-				conditionTypesByGraphType[graphType.Name] = conditions;
+				conditionTypesByModelType[modelType.Name] = conditions;
 			}
 
 			if (!conditions.Contains(this))
@@ -196,7 +196,7 @@ namespace ExoRule
 			if (ConditionRule == null)
 				throw new NotSupportedException("The current condition type, " + Code + ", does not have an associated condition rule.");
 
-			ConditionRule.Invoke(GraphContext.Current.GetGraphType(target).GetGraphInstance(target), null);
+			ConditionRule.Invoke(ModelContext.Current.GetModelType(target).GetModelInstance(target), null);
 		}
 
 		/// <summary>
@@ -219,7 +219,7 @@ namespace ExoRule
 		public Condition When(string message, object target, Func<bool> condition, params string[] properties)
 		{
 			// Get the current condition if it exists
-			ConditionTarget conditionTarget = GraphContext.Current.GetGraphInstance(target).GetExtension<RuleManager>().GetCondition(this);
+			ConditionTarget conditionTarget = ModelContext.Current.GetModelInstance(target).GetExtension<RuleManager>().GetCondition(this);
 
 			// Add the condition on the target if it does not exist yet
 			if (condition())
@@ -248,11 +248,11 @@ namespace ExoRule
 		}
 
 		/// <summary>
-		/// Gets condition types associated with rules that are registered for the specified <see cref="GraphType"/>.
+		/// Gets condition types associated with rules that are registered for the specified <see cref="ModelType"/>.
 		/// </summary>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		public static IEnumerable<ConditionType> GetConditionTypes(GraphType type)
+		public static IEnumerable<ConditionType> GetConditionTypes(ModelType type)
 		{
 			return Rule.GetRegisteredRules(type).SelectMany(rule => rule.ConditionTypes).Distinct();
 		}

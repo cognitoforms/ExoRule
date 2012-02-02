@@ -1,20 +1,20 @@
 ﻿using System.Linq;
 using System.Runtime.Serialization;
-using ExoGraph;
+using ExoModel;
 using System;
 using System.Collections.Generic;
 
 namespace ExoRule.Validation
 {
 	/// <summary>
-	/// Applies conditions when the value of a <see cref="GraphProperty"/> is
+	/// Applies conditions when the value of a <see cref="ModelProperty"/> is
 	/// not an allowed value.
 	/// </summary>
 	public class AllowedValuesRule : PropertyRule
 	{
 		#region Fields
 
-		GraphSource source;
+		ModelSource source;
 
 		#endregion
 
@@ -44,7 +44,7 @@ namespace ExoRule.Validation
 			}
 			private set
 			{
-				source = new GraphSource(RootType, value);
+				source = new ModelSource(RootType, value);
 			}
 		}
 
@@ -68,10 +68,10 @@ namespace ExoRule.Validation
 				(s) => s.Replace("{property}", GetLabel(rootType, property)), null);
 		}
 
-		protected override bool ConditionApplies(GraphInstance root)
+		protected override bool ConditionApplies(ModelInstance root)
 		{
 			// Get the list of allowed values
-			GraphInstanceList allowedValues = source.GetList(root);
+			ModelInstanceList allowedValues = source.GetList(root);
 			if (allowedValues == null)
 				return false;
 
@@ -79,7 +79,7 @@ namespace ExoRule.Validation
 			if (Property.IsList)
 			{
 				// Get the current property value
-				GraphInstanceList values = root.GetList((GraphReferenceProperty)Property);
+				ModelInstanceList values = root.GetList((ModelReferenceProperty)Property);
 
 				// Determine whether the property value is in the list of allowed values
 				return !(values == null || values.All(value => allowedValues.Contains(value)));
@@ -89,7 +89,7 @@ namespace ExoRule.Validation
 			else
 			{
 				// Get the current property value
-				GraphInstance value = root.GetReference((GraphReferenceProperty)Property);
+				ModelInstance value = root.GetReference((ModelReferenceProperty)Property);
 
 				// Determine whether the property value is in the list of allowed values
 				return !(value == null || allowedValues.Contains(value));
@@ -102,7 +102,7 @@ namespace ExoRule.Validation
 		/// <param name="instance"></param>
 		/// <param name="property"></param>
 		/// <returns></returns>
-		public static IEnumerable<GraphInstance> GetAllowedValues(GraphInstance instance, GraphProperty property)
+		public static IEnumerable<ModelInstance> GetAllowedValues(ModelInstance instance, ModelProperty property)
 		{
 			var allowedValuesRule = Rule.GetRegisteredRules(property.DeclaringType).OfType<AllowedValuesRule>().Where(r => r.Property == property).FirstOrDefault();
 			if (allowedValuesRule == null)
