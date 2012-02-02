@@ -28,7 +28,8 @@ namespace ExoRule.Validation
 		/// </summary>
 		static PropertyRule()
 		{
-			ConditionType.MapResources(new Type[] { typeof(RequiredRule), typeof(RequiredIfRule), typeof(StringLengthRule), typeof(RangeRule), typeof(CompareRule), typeof(AllowedValuesRule) }, typeof(PropertyRule));
+			var propertyRuleType = typeof(PropertyRule);
+			ConditionType.MapResources(propertyRuleType.Assembly.GetTypes().Where(t => t.IsSubclassOf(propertyRuleType)), propertyRuleType);
 		}
 
 		/// <summary>
@@ -43,7 +44,8 @@ namespace ExoRule.Validation
 			: base(rootType, conditionType.Code, invocationTypes, new ConditionType[] { conditionType }, predicates)
 		{
 			this.property = property;
-			conditionType.ConditionRule = this;
+			if (conditionType != null)
+				conditionType.ConditionRule = this;
 			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
 		}
 
@@ -60,21 +62,6 @@ namespace ExoRule.Validation
 			get
 			{
 				return RootType.Properties[property];
-			}
-		}
-
-		/// <summary>
-		/// Text version of <see cref="Property"/> to support WCF serialization.
-		/// </summary>
-		string PropertyName
-		{
-			get
-			{
-				return property;
-			}
-			set
-			{
-				property = value;
 			}
 		}
 
@@ -130,27 +117,6 @@ namespace ExoRule.Validation
 		/// </summary>
 		/// <returns>true if <paramref name="root"/> should be associated with the <see cref="ConditionType"/></returns>
 		protected abstract bool ConditionApplies(GraphInstance root);
-
-		/// <summary>
-		/// Transforms attribute-based property validation information into condition types.
-		/// </summary>
-		/// <param name="type"></param>
-		/// <param name="converters"></param>
-		/// <returns></returns>
-		public static IEnumerable<ConditionType> InferConditionTypes(GraphType type, params Func<Attribute, ConditionType>[] converters)
-		{
-			List<ConditionType> conditionTypes = new List<ConditionType>();
-			foreach (var property in type.Properties)
-			{
-				foreach (var converter in converters)
-				{
-					Attribute source = property.GetAttributes<Attribute>().Where(attribute => attribute.GetType() == converter.Method.GetParameters()[0].ParameterType).FirstOrDefault();
-					if (source != null)
-						conditionTypes.Add(converter(source));
-				}
-			}
-			return conditionTypes;
-		}
 
 		#endregion
 	}

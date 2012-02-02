@@ -81,6 +81,9 @@
     <Compile Include="RuleProvider.cs" />
     <Compile Include="RuleInvocationType.cs" />
     <Compile Include="RuleManager.cs" />
+    <Compile Include="Validation\OwnerRule.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Validation\StringFormatRule.cs" />
     <Compile Include="Validation\ListLengthRule.cs" />
     <Compile Include="Validation\PropertyRule.cs">
