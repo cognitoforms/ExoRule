@@ -25,8 +25,6 @@ namespace ExoRule
 
 		string code;
 		string message;
-		ConditionCategory category;
-		ConditionTypeSet[] sets;
 		Func<string, string> translator;
 
 		#endregion
@@ -57,12 +55,11 @@ namespace ExoRule
 				this.translator = translator;
 		}
 
-
 		protected ConditionType(string code, ConditionCategory category, string message, params ConditionTypeSet[] sets)
 		{
-			this.sets = sets;
+			this.Sets = sets;
 			this.Code = code;
-			this.category = category;
+			this.Category = category;
 			this.Message = message;
 		}
 
@@ -98,42 +95,9 @@ namespace ExoRule
 			}
 		}
 
-		public ConditionCategory Category
-		{
-			get
-			{
-				return category;
-			}
-		}
+		public ConditionCategory Category { get; private set; }
 
-		string CategoryString
-		{
-			get
-			{
-				return Category.ToString();
-			}
-			set { }
-		}
-		
-		public ConditionTypeSet[] Sets
-		{
-			get
-			{
-				return sets;
-			}
-		}
-
-		string[] SetsString
-		{
-			get
-			{
-				return sets == null ? null : sets.Select(s => s.Name).ToArray();
-			}
-			set
-			{
-				sets = value.Select(s => (ConditionTypeSet)s).ToArray();
-			}
-		}
+		public IEnumerable<ConditionTypeSet> Sets { get; private set; }
 
 		public string Message
 		{
@@ -161,7 +125,7 @@ namespace ExoRule
 		/// <param name="predicates"></param>
 		/// <param name="properties"></param>
 		protected void CreateConditionRule<TRoot>(Predicate<TRoot> condition, string[] predicates, string[] properties)
-			where TRoot :  class
+			where TRoot : class
 		{
 			// Automatically calculate predicates if they were not specified
 			if (predicates == null)
@@ -180,7 +144,7 @@ namespace ExoRule
 				conditionTypesByGraphType[graphType.Name] = conditions;
 			}
 
-			if(!conditions.Contains(this))
+			if (!conditions.Contains(this))
 				conditions.Add(this);
 
 			// Create an condition rule based on the specified condition
