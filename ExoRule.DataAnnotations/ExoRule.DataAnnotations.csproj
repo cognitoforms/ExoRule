@@ -52,9 +52,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoGraph.csproj">
+    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoModel.csproj">
       <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
-      <Name>ExoGraph</Name>
+      <Name>ExoModel</Name>
     </ProjectReference>
     <ProjectReference Include="..\ExoRule\ExoRule.csproj">
       <Project>{B67D2642-A41A-42B2-8454-78ABA257008F}</Project>

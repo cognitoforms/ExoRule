@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 using System.ComponentModel.DataAnnotations;
 using ExoRule.Validation;
 
@@ -36,7 +36,7 @@ namespace ExoRule.DataAnnotations
 
 		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 		{
-			var instance = GraphContext.Current.GetGraphInstance(validationContext.ObjectInstance);
+			var instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
 			var property = instance.Type.Properties[validationContext.MemberName];
 			int integerLengthValue = 0;
 
@@ -49,7 +49,7 @@ namespace ExoRule.DataAnnotations
 			}
 			else
 			{
-				var lengthProp = new GraphSource(instance.Type, LengthCompareProperty);
+				var lengthProp = new ModelSource(instance.Type, LengthCompareProperty);
 
 				// Get the integer length of the property.  If the property is not an integer return null
 				object lengthPropertyValue = lengthProp.GetValue(instance);
@@ -65,7 +65,7 @@ namespace ExoRule.DataAnnotations
 			if (property.IsList)
 			{
 				// Get the current property value
-				GraphInstanceList items = instance.GetList((GraphReferenceProperty)property);
+				ModelInstanceList items = instance.GetList((ModelReferenceProperty)property);
 
 				// Determine whether the list size passes the operator's test
 				switch (CompareOp)

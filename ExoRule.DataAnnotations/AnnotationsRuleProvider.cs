@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel.DataAnnotations;
-using ExoGraph;
+using ExoModel;
 using System.Text.RegularExpressions;
 using ExoRule.Validation;
 using System.Reflection;
@@ -12,7 +12,7 @@ namespace ExoRule.DataAnnotations
 {
 	/// <summary>
 	/// Automatically creates rules based on the presence of data annotation attributes
-	/// on properties of the specified graph types.
+	/// on properties of the specified model types.
 	/// </summary>
 	public class AnnotationsRuleProvider : IRuleProvider
 	{
@@ -26,7 +26,7 @@ namespace ExoRule.DataAnnotations
 		#region Constructors
 
 		/// <summary>
-		/// Automatically creates property validation rules for the specified <see cref="GraphType"/> instances
+		/// Automatically creates property validation rules for the specified <see cref="ModelType"/> instances
 		/// based on data annotation attributes associated with properties declared on each type.
 		/// </summary>
 		/// <param name="types"></param>
@@ -36,7 +36,7 @@ namespace ExoRule.DataAnnotations
 		}
 
 		/// <summary>
-		/// Automatically creates property validation rules for the specified <see cref="GraphType"/> instances
+		/// Automatically creates property validation rules for the specified <see cref="ModelType"/> instances
 		/// based on data annotation attributes associated with properties declared on each type.
 		/// </summary>
 		/// <param name="assembly"></param>
@@ -59,9 +59,9 @@ namespace ExoRule.DataAnnotations
 			if (rules == null)
 			{
 				// Process each type
-				var context = GraphContext.Current;
+				var context = ModelContext.Current;
 				rules = new List<Rule>();
-				foreach (var type in types.Select(t => context.GetGraphType(t)).Where(t => t != null))
+				foreach (var type in types.Select(t => context.GetModelType(t)).Where(t => t != null))
 				{
 					// Process each instance property declared on the current type
 					foreach (var property in type.Properties.Where(property => property.DeclaringType == type && !property.IsStatic))
@@ -87,7 +87,7 @@ namespace ExoRule.DataAnnotations
 							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
 
 						// Allowed Values Attribute
-						GraphReferenceProperty reference = property as GraphReferenceProperty;
+						ModelReferenceProperty reference = property as ModelReferenceProperty;
 						if (reference != null)
 						{
 							foreach (var source in property.GetAttributes<AllowedValuesAttribute>()

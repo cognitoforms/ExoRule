@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 using System.ComponentModel.DataAnnotations;
 using ExoRule.Validation;
 
@@ -19,12 +19,12 @@ public class AllowedValuesAttribute : ValidationAttribute
 
 	protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 	{
-		var instance = GraphContext.Current.GetGraphInstance(validationContext.ObjectInstance);
-		var source = new GraphSource(instance.Type, Source);
+		var instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
+		var source = new ModelSource(instance.Type, Source);
 		var property = instance.Type.Properties[validationContext.MemberName];
 
 		// Get the list of allowed values
-		GraphInstanceList allowedValues = source.GetList(instance);
+		ModelInstanceList allowedValues = source.GetList(instance);
 		if (allowedValues == null)
 			return null;
 
@@ -32,7 +32,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 		if (property.IsList)
 		{
 			// Get the current property value
-			GraphInstanceList items = instance.GetList((GraphReferenceProperty)property);
+			ModelInstanceList items = instance.GetList((ModelReferenceProperty)property);
 
 			// Determine whether the property value is in the list of allowed values
 			if (!(items == null || items.All(item => allowedValues.Contains(item))))
@@ -43,7 +43,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 		else
 		{
 			// Get the current property value
-			GraphInstance item = instance.GetReference((GraphReferenceProperty)property);
+			ModelInstance item = instance.GetReference((ModelReferenceProperty)property);
 
 			// Determine whether the property value is in the list of allowed values
 			if (!(item == null || allowedValues.Contains(item)))

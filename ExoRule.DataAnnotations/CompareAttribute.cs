@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ExoGraph;
+using ExoModel;
 using System.ComponentModel.DataAnnotations;
 using ExoRule.Validation;
 
@@ -30,13 +30,13 @@ namespace ExoRule.DataAnnotations
 
 		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 		{
-			GraphInstance instance = GraphContext.Current.GetGraphInstance(validationContext.ObjectInstance);
-			GraphProperty sourceProperty = instance.Type.Properties[validationContext.MemberName];
+			ModelInstance instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
+			ModelProperty sourceProperty = instance.Type.Properties[validationContext.MemberName];
 
 			if (ComparisonPropertyName == null)
 				return null;
 
-			GraphSource comparePropPath = new GraphSource(instance.Type, ComparisonPropertyName);
+			ModelSource comparePropPath = new ModelSource(instance.Type, ComparisonPropertyName);
 
 			object compareValue = comparePropPath.GetValue(instance);
 

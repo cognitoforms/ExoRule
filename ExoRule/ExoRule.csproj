@@ -99,12 +99,6 @@
     <Compile Include="Warning.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoModel.csproj">
-      <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
-      <Name>ExoModel</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Validation\PropertyRule.resx">
       <DependentUpon>PropertyRule.cs</DependentUpon>
       <Generator>ResXFileCodeGenerator</Generator>
@@ -114,7 +108,12 @@
   <ItemGroup>
     <None Include="NuGet\ExoRule.nuspec" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoModel.csproj">
+      <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
+      <Name>ExoModel</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
