@@ -114,15 +114,27 @@ namespace ExoRule.Validation
 			}
 
 			// Get the comparison source
-			var source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
-			var sourceType = source.SourceType;
-			var sourceProperty = source.SourceProperty;
+			if (!String.IsNullOrEmpty(compareSource))
+			{
+				var source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
+				var sourceType = source.SourceType;
+				var sourceProperty = source.SourceProperty;
 
-			return new Error(
-				GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
-				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
-					.Replace("{compareSource}", staticLength >= 0 ? staticLength.ToString() : GetLabel(sourceType, sourceProperty)));
+				return new Error(
+					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
+					(s) => s
+						.Replace("{property}", GetLabel(rootType, property))
+						.Replace("{compareSource}", GetLabel(sourceType, sourceProperty)));
+			}
+			else
+			{
+				//there is no compare source and we are using a static length
+				return new Error(
+					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
+					(s) => s
+						.Replace("{property}", GetLabel(rootType, property))
+						.Replace("{compareSource}", staticLength.ToString() ));
+			}
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)
