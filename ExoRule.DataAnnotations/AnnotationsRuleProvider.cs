@@ -86,7 +86,11 @@ namespace ExoRule.DataAnnotations
 						foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
 							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
 
-						// Allowed Values Attribute
+                        // Regular Expression Attribute
+                        foreach (var attr in property.GetAttributes<RegularExpressionAttribute>().Take(1))
+                            rules.Add(new StringFormatRule(type.Name, property.Name, () => attr.ErrorMessage, () => new Regex(attr.Pattern), null));
+                        
+                        // Allowed Values Attribute
 						ModelReferenceProperty reference = property as ModelReferenceProperty;
 						if (reference != null)
 						{
