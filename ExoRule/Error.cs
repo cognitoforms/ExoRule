@@ -8,8 +8,8 @@ namespace ExoRule
 {
 	public class Error : ConditionType
 	{
-		public Error(string message)
-			: this(null, message)
+		public Error(string message, params ConditionTypeSet[] sets)
+			: this(null, message, sets)
 		{ }
 
 		public Error(string code, string message, params ConditionTypeSet[] sets)
