@@ -84,35 +84,12 @@ namespace ExoRule.Validation
 		}
 
 		/// <summary>
-		/// Indicates whether the compare source is static.
-		/// </summary>
-		public bool CompareSourceIsStatic
-		{
-			get
-			{
-				return compareSource.IsStatic;
-			}
-		}
-
-		/// <summary>
 		/// The type of comparison to perform.
 		/// </summary>
 		public CompareOperator CompareOperator
 		{
 			get;
 			private set;
-		}
-
-		public string CompareOperatorText
-		{
-			get
-			{
-				return CompareOperator.ToString();
-			}
-			set
-			{
-				CompareOperator = (CompareOperator)Enum.Parse(typeof(CompareOperator), value);
-			}
 		}
 
 		#endregion
