@@ -40,8 +40,9 @@ namespace ExoRule
 			else if (properties is string[])
 				properties = new List<string>(properties);
 
-			// Add the property
-			((List<string>)properties).Add(property);
+			// Add the property if it is not already in the list
+			if (!((List<string>)properties).Contains(property))
+				((List<string>)properties).Add(property);
 		}
 
 		public IEnumerable<string> Properties
