@@ -24,23 +24,33 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public ListLengthRule(string rootType, string property, int staticLength, string compareSource, CompareOperator op)
-			: this(rootType, property, staticLength, compareSource, op, RuleInvocationType.PropertyChanged)
+		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator)
+			: this(rootType, property, compareValue, compareOperator, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
 		{ }
 
-		public ListLengthRule(string rootType, string property, int staticLength, string compareSource, CompareOperator op, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, staticLength, compareSource, op), invocationTypes)
+		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, compareValue, null, compareOperator), invocationTypes)
 		{
-			this.StaticLength = staticLength;
+			this.CompareValue = compareValue;
+			this.CompareOperator = compareOperator;
+		}
+
+		public ListLengthRule(string rootType, string property, int compareValue, string compareSource, CompareOperator compareOperator)
+			: this(rootType, property, compareSource, compareOperator, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		{ }
+
+		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, 0, compareSource, compareOperator), invocationTypes)
+		{
 			this.CompareSource = compareSource;
-			this.CompareOperator = op;
+			this.CompareOperator = compareOperator;
 		}
 
 		#endregion
 
 		#region Properties
 
-		public int StaticLength { get; private set; }
+		public int CompareValue { get; private set; }
 
 		/// <summary>
 		/// The static or instance path of the property to compare to.
@@ -69,24 +79,11 @@ namespace ExoRule.Validation
 			private set;
 		}
 
-		/// <summary>
-		/// Indicates whether the compare source is static.
-		/// </summary>
-		public bool CompareSourceIsStatic
-		{
-			get
-			{
-				//return true when the compare property does not exist because we do not 
-				//want the code using this property tack a "this." on the front of the property path
-				return compareSource == null ? true : compareSource.IsStatic;
-			}
-		}
-
 		#endregion
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int staticLength, string compareSource, CompareOperator op)
+		static Error CreateError(string rootType, string property, int compareValue, string compareSource, CompareOperator op)
 		{
 			string message;
 			switch (op)
@@ -133,7 +130,7 @@ namespace ExoRule.Validation
 					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
 					(s) => s
 						.Replace("{property}", GetLabel(rootType, property))
-						.Replace("{compareSource}", staticLength.ToString() ));
+						.Replace("{compareSource}", compareValue.ToString() ));
 			}
 		}
 
@@ -155,14 +152,12 @@ namespace ExoRule.Validation
 			int lengthToCompareAgainst = 0;
 
 			//now see if the rule is using a static length or the compare property
-			if (StaticLength > 0)
-			{
-				lengthToCompareAgainst = StaticLength;
-			}
+			if (CompareSource == null)
+				lengthToCompareAgainst = CompareValue;
 			else
 			{
 				object compareVal = compareSource.GetValue(root);
-				bool success = Int32.TryParse(compareVal.ToString(), out lengthToCompareAgainst);
+				bool success = Int32.TryParse(compareVal + "", out lengthToCompareAgainst);
 
 				//if it could not parse then this is not a valid integer property
 				if (!success)
