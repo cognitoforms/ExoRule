@@ -63,18 +63,11 @@ namespace ExoRule.Validation
 
 		protected override bool ConditionApplies(ModelInstance root)
 		{
-			object value = root[Property];
-
-			if (value == null)
+			var value = root[Property] as string;
+			if (String.IsNullOrEmpty(value))
 				return false;
 
-			string str = value.ToString();
-
-			if (str == null)
-				return false;
-
-			int len = str.Length;
-			return (Maximum > 0 && len > Maximum) || (Minimum > 0 && len < Minimum);
+			return (Maximum > 0 && value.Length > Maximum) || (Minimum > 0 && value.Length < Minimum);
 		}
 
 		#endregion
