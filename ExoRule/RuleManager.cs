@@ -47,7 +47,12 @@ namespace ExoRule
 
 		internal IEnumerable<Condition> GetConditions()
 		{
-			return conditions.Values.Select(target => target.Condition).Distinct();
+			return conditions.Values.Select(target => target.Condition);
+		}
+
+		internal IEnumerable<Condition> GetConditions(Func<ConditionTarget, bool> filter)
+		{
+			return conditions.Values.Where(filter).Select(target => target.Condition);
 		}
 
 		internal void RunPendingPropertyGetRules(ModelInstance instance, Func<ModelProperty, bool> when)

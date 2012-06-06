@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.Serialization;
+using System.Linq.Expressions;
 
 namespace ExoRule
 {
@@ -60,11 +61,11 @@ namespace ExoRule
 	public class DenyPermission<TRoot> : DenyPermission
 		where TRoot : class
 	{
-		public DenyPermission(string message, PermissionType permissionType, Predicate<TRoot> condition)
+		public DenyPermission(string message, PermissionType permissionType, Expression<Func<TRoot, bool>> condition)
 			: this(null, message, permissionType, condition)
 		{ }
 
-		public DenyPermission(string code, string message, PermissionType permissionType, Predicate<TRoot> condition)
+		public DenyPermission(string code, string message, PermissionType permissionType, Expression<Func<TRoot, bool>> condition)
 			: base(code, message, permissionType)
 		{
 			CreateConditionRule<TRoot>(condition, null, null);

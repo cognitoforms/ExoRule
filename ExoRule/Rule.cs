@@ -63,7 +63,7 @@ namespace ExoRule
 
 			// Default the execution location to server
 			this.ExecutionLocation = RuleExecutionLocation.Server;
-			
+
 			// Split the predicates into property change paths and return values
 			if (predicates != null && predicates.Length > 0)
 				SetPredicates(predicates);
@@ -102,12 +102,12 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the set of predicate paths that trigger property change invocations.
 		/// </summary>
-		public string[] Predicates { get; internal set; }
+		public IEnumerable<string> Predicates { get; internal set; }
 
 		/// <summary>
 		/// Gets the set of properties that trigger property get invocations.
 		/// </summary>
-		public string[] ReturnValues { get; internal set; }
+		public IEnumerable<string> ReturnValues { get; internal set; }
 
 		/// <summary>
 		/// Gets the set of <see cref="ConditionType"/> instances the current rule is responsible
@@ -120,6 +120,12 @@ namespace ExoRule
 				return conditionTypes;
 			}
 		}
+
+		/// <summary>
+		/// Initialization event raised once for each rule immediately before it is registered
+		/// for the first time, allowing rules to delay one time setup logic.
+		/// </summary>
+		protected event EventHandler Initialize;
 
 		#endregion
 
@@ -142,10 +148,11 @@ namespace ExoRule
 			this.ReturnValues = predicates
 					.Where((predicate) => predicate.StartsWith("return "))
 					.Select((predicate) => predicate.Substring(7))
+					.Concat(this.ReturnValues ?? new string[0])
 					.ToArray();
 
 			// Automatically mark rules with return values as property get rules
-			if (this.ReturnValues.Length > 0)
+			if (this.ReturnValues.Any())
 			{
 				// Remove property change invocation
 				this.InvocationTypes &= ~RuleInvocationType.PropertyChanged;
@@ -171,7 +178,7 @@ namespace ExoRule
 			List<Rule> rules = new List<Rule>();
 			foreach (Type type in types
 				.Where(type => type.IsClass)
-				.SelectMany(type => type.BaseType.IsGenericType ? new Type[] {type, type.BaseType} : new Type[] { type }))
+				.SelectMany(type => type.BaseType.IsGenericType ? new Type[] { type, type.BaseType } : new Type[] { type }))
 			{
 				rules.AddRange(
 					type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
@@ -181,7 +188,7 @@ namespace ExoRule
 							IRuleProvider ruleProvider = (IRuleProvider)field.GetValue(null);
 							if (ruleProvider != null)
 								return ruleProvider.GetRules(type, field.Name);
-							return new Rule[] {};
+							return new Rule[] { };
 						})
 						.Where(rule => rule != null)
 				);
@@ -195,9 +202,9 @@ namespace ExoRule
 							ConditionType error = (ConditionType)field.GetValue(null);
 							if (error != null && error.Code == null)
 								error.Code = field.DeclaringType.Name + "." + field.Name;
-							return error; 
+							return error;
 						}))
-				{}
+				{ }
 			}
 			return rules;
 		}
@@ -268,6 +275,13 @@ namespace ExoRule
 		/// </summary>
 		public void Register()
 		{
+			// Raise the Initialization event the first time the rule is registered
+			if (Initialize != null)
+			{
+				Initialize(this, EventArgs.Empty);
+				Initialize = null;
+			}
+
 			// Default the invocation type to PropertyChanged if none were assigned
 			if ((int)InvocationTypes == 1)
 				InvocationTypes = RuleInvocationType.PropertyChanged;
@@ -307,7 +321,7 @@ namespace ExoRule
 					{
 						// Get the rule manager for the current instance
 						var manager = e.Instance.GetExtension<RuleManager>();
-						
+
 						// Determine if the rule needs to be run
 						if (e.IsFirstAccess || manager.IsPendingInvocation(this))
 						{
@@ -453,7 +467,7 @@ namespace ExoRule
 		public Rule(string name, RuleInvocationType invocationTypes, string[] predicates, ConditionType[] conditionTypes, Action<TRoot> action)
 			: base(null, name, invocationTypes, conditionTypes, predicates)
 		{
-			Initialize(action);
+			Action = action;
 		}
 
 		internal Rule(string name, RuleInvocationType invocationTypes, string rootType, string[] predicates)
@@ -472,7 +486,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the action that will be performed when the rule is invoked.
 		/// </summary>
-		public Action<TRoot> Action { get; private set; }
+		public Action<TRoot> Action { get; internal set; }
 
 		/// <summary>
 		/// Gets the root <see cref="ModelType"/> of the rule.
@@ -488,6 +502,21 @@ namespace ExoRule
 		#endregion
 
 		#region Methods
+
+		static MethodInfo assign = typeof(Expression).GetMethod("Assign");
+
+		/// <summary>
+		/// Creates a rule that calculates the value of a single property given a simple expression tree.
+		/// </summary>
+		/// <typeparam name="TProperty"></typeparam>
+		/// <param name="property"></param>
+		/// <param name="calculation"></param>
+		/// <returns></returns>
+		public static Rule<TRoot> Calculate<TProperty>(Expression<Func<TRoot, TProperty>> property, Expression<Func<TRoot, TProperty>> calculation)
+		{
+			// Create and return the new calculation rule
+			return new Calculation<TProperty>(property, calculation);
+		}
 
 		public Rule<TRoot> OnInit()
 		{
@@ -509,7 +538,10 @@ namespace ExoRule
 
 		public Rule<TRoot> OnChangeOf(params string[] predicates)
 		{
-			Predicates = predicates;
+			if (Predicates != null)
+				Predicates = Predicates.Concat(predicates).ToArray();
+			else
+				Predicates = predicates;
 			if ((this.InvocationTypes & RuleInvocationType.PropertyGet) == 0)
 				this.InvocationTypes |= RuleInvocationType.PropertyChanged;
 			return this;
@@ -557,20 +589,14 @@ namespace ExoRule
 			return this;
 		}
 
-		protected override string[] GetPredicates()
-		{
-			ModelPath path;
-			return PredicateBuilder
-				.GetPredicates(Action.Method, method => Rule<TRoot>.PredicateFilter(Action.Method, method), (InvocationTypes | RuleInvocationType.PropertyGet) > 0)
-				.Where(predicate => RootType.TryGetPath(predicate.StartsWith("return ") ? predicate.Substring(7) : predicate, out path))
-				.ToArray();
-		}
-
-		internal void Initialize(Action<TRoot> action)
-		{
-			// Set the rule action
-			Action = action;
-		}
+		//protected override string[] GetPredicates()
+		//{
+		//    ModelPath path;
+		//    return PredicateBuilder
+		//        .GetPredicates(Action.Method, method => Rule<TRoot>.PredicateFilter(Action.Method, method), (InvocationTypes | RuleInvocationType.PropertyGet) > 0)
+		//        .Where(predicate => RootType.TryGetPath(predicate.StartsWith("return ") ? predicate.Substring(7) : predicate, out path))
+		//        .ToArray();
+		//}
 
 		/// <summary>
 		/// Converts <see cref="Action<TRoot>"/> into a corresponding <see cref="Rule<TRoot>"/> instance.
@@ -588,6 +614,191 @@ namespace ExoRule
 		internal protected override void OnInvoke(ModelInstance root, ModelEvent modelEvent)
 		{
 			Action((TRoot)root.Instance);
+		}
+
+		#endregion
+
+		#region Calculation<TProperty>
+
+		/// <summary>
+		/// Special strongly-typed rule class responsible for automatically calculating the value
+		/// of a property.
+		/// </summary>
+		/// <typeparam name="TProperty"></typeparam>
+		internal class Calculation<TProperty> : Rule<TRoot>, ICalculationRule
+		{
+			string path;
+			LambdaExpression calculation;
+
+			/// <summary>
+			/// Creates a new calculation for the specified property, including an action to set the property
+			/// and the expression tree responsible for calculating the expected value.
+			/// </summary>
+			/// <param name="property"></param>
+			/// <param name="action"></param>
+			/// <param name="calculation"></param>
+			internal Calculation(Expression<Func<TRoot, TProperty>> property, Expression<Func<TRoot, TProperty>> calculation)
+				: base(null)
+			{
+				// Ensure the property argument is a valid expression
+				if (property == null || !(property.Body is MemberExpression))
+					throw new ArgumentException("The property expression must be a simple expression that returns a property from the root type (root => root.Property)", "property");
+
+				// Ensure the property member expression is a property, not a field
+				var propInfo = (PropertyInfo)((MemberExpression)property.Body).Member as PropertyInfo;
+				if (propInfo == null)
+					throw new ArgumentException("Only properties can be calculated via rules, not fields.", "property");
+
+				this.Property = propInfo.Name;
+				this.calculation = calculation;
+
+				// Perform delayed initialization to be able to reference the model type information
+				Initialize += (s, e) => 
+				{
+					// Get the model property
+					var prop = RootType.Properties[propInfo.Name];
+					if (prop == null)
+						throw new ArgumentException("Only valid model properties can be calculated: " + propInfo.Name, "property");
+
+					// List property
+					if (prop is ModelReferenceProperty && prop.IsList)
+					{
+						// Compile the calculation outside the action lambda to cache via closure
+						var getListItems = calculation.Compile();
+
+						this.Action = root =>
+						{
+							// Get the source list
+							var source = RootType.Context.GetModelInstance(root).GetList((ModelReferenceProperty)prop);
+
+							// Get the set of items the list should contain
+							var items = ((IEnumerable)getListItems(root)).Cast<object>().Select(instance => RootType.Context.GetModelInstance(instance));
+
+							// Update the list
+							source.Update(items);
+						};
+					}
+
+					// Reference or value property
+					else
+					{
+						// Ensure the property can be set
+						var setMethod = propInfo.GetSetMethod(true);
+						if (setMethod == null)
+							throw new ArgumentException("Read-only properties cannot be calculated: " + propInfo.Name, "property");
+
+						// Create the expression to set the property using the calculation expression
+						var root = Expression.Parameter(typeof(TRoot), "root");
+						var setter = Expression.Call(root, setMethod, Expression.Invoke(calculation, root));
+						this.Action = Expression.Lambda<Action<TRoot>>(setter, root).Compile();
+					}
+
+					// Assert that this rule returns the value of the calculated property
+					Returns(this.Property);
+
+					// Register for change events as well
+					if (this.path == null)
+						this.path = ModelContext.Current.GetModelType<TRoot>().GetPath(this.calculation).Path;
+					if (!String.IsNullOrEmpty(this.path))
+						OnChangeOf(this.path);
+				};
+
+				// Mark the rule for both server and client execution by default
+				RunOnServerAndClient();
+			}
+
+			protected internal override void OnRegister()
+			{
+				base.OnRegister();
+			}
+
+			/// <summary>
+			/// Gets the expression tree responsible for calculating the value of the property.
+			/// </summary>
+			LambdaExpression ICalculationRule.Calculation { get { return calculation; } }
+
+			/// <summary>
+			/// Gets the name of the property being calculated.
+			/// </summary>
+			public string Property { get; private set; }
+
+			/// <summary>
+			/// Returns null to indicate that calculation rules do not assert a condition.
+			/// </summary>
+			ConditionType IPropertyRule.ConditionType
+			{
+				get
+				{
+					return null;
+				}
+			}
+		}
+
+		#endregion
+
+		#region Condition
+
+		/// <summary>
+		/// Special strongly-typed rule class responsible for automatically asserting a condition of the model.
+		/// </summary>
+		/// <typeparam name="TProperty"></typeparam>
+		internal class Condition : Rule<TRoot>, IConditionRule
+		{
+			Expression<Func<TRoot, bool>> condition;
+			Func<TRoot, bool> compiledCondition;
+			string path;
+
+			/// <summary>
+			/// Creates a new calculation for the specified property, including an action to set the property
+			/// and the expression tree responsible for calculating the expected value
+			/// </summary>
+			/// <param name="conditionType"></param>
+			/// <param name="condition"></param>
+			/// <param name="properties"></param>
+			internal Condition(ConditionType conditionType, Expression<Func<TRoot, bool>> condition, params string[] properties)
+				: base(0, null, new ConditionType[] { conditionType }, null)
+			{
+				this.condition = condition;
+				this.compiledCondition = condition.Compile();
+				this.Properties = properties;
+
+				// Perform additional initialization during the initialize event to avoid accessing the model context too early
+				Initialize += (s, e) =>
+				{
+					if (this.Action == null)
+					{
+						this.path = ModelContext.Current.GetModelType<TRoot>().GetPath(this.condition).Path;
+						OnChangeOf(this.path);
+						if (this.Properties == null || !this.Properties.Any())
+							this.Properties = new string[] { path };
+						this.Action = root => this.ConditionType.When(root, () => compiledCondition(root), this.Properties.ToArray());
+					}
+				};
+
+				// Mark the rule for both server and client execution by default
+				RunOnServerAndClient();
+			}
+
+			/// <summary>
+			/// Gets the expression tree responsible for asserting the condition of the model.
+			/// </summary>
+			LambdaExpression IConditionRule.Condition { get { return condition; } }
+
+			/// <summary>
+			/// Gets the set of properties the condition should be associated with.
+			/// </summary>
+			public IEnumerable<string> Properties { get; private set; }
+
+			/// <summary>
+			/// Gets the type of condition being asserted.
+			/// </summary>
+			public ConditionType ConditionType
+			{
+				get
+				{
+					return ConditionTypes.First();
+				}
+			}
 		}
 
 		#endregion
@@ -609,7 +820,7 @@ namespace ExoRule
 		protected Rule(RuleInvocationType invocationTypes, string rootType, string[] predicates)
 			: base(typeof(TRule).Name, invocationTypes, rootType, predicates)
 		{
-			Initialize(OnInvoke);
+			Action = OnInvoke;
 		}
 
 		protected abstract void OnInvoke(TRoot root);
@@ -636,7 +847,7 @@ namespace ExoRule
 		{ }
 
 		protected Rule()
-			: base(typeof(TRule).Name, 0, null, new string[] {})
+			: base(typeof(TRule).Name, 0, null, new string[] { })
 		{ }
 
 		void OnInvoke(ModelInstance instance, TEvent e)

@@ -36,7 +36,7 @@ namespace ExoRule
 		public Warning(string code, string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
 			: base(code, message)
 		{
-			CreateConditionRule<TRoot>(condition, null, null);
+			// TODO CreateConditionRule<TRoot>(condition, null, null);
 		}
 	}
 }

@@ -43,6 +43,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -61,8 +62,11 @@
   <ItemGroup>
     <Compile Include="ConditionFilter.cs" />
     <Compile Include="ConditionTypeSet.cs" />
+    <Compile Include="IConditionRule.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="ICalculationRule.cs" />
+    <Compile Include="IPropertyRule.cs" />
     <Compile Include="IRuleProvider.cs" />
     <Compile Include="Permission.cs" />
     <Compile Include="PermissionType.cs" />

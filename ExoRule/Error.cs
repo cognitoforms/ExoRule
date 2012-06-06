@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.Serialization;
+using System.Linq.Expressions;
 
 namespace ExoRule
 {
@@ -35,7 +36,7 @@ namespace ExoRule
 		/// <param name="message">Message describing the error</param>
 		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
 		/// <param name="sets">The list of <see cref="ConditionTypeSet"/> instances the rule is associated with</param>
-		public Error(string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
+		public Error(string message, Expression<Func<TRoot, bool>> condition, params ConditionTypeSet[] sets)
 			: this(null, message, condition, sets)
 		{ }
 
@@ -46,10 +47,54 @@ namespace ExoRule
 		/// <param name="message">Message describing the error</param>
 		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
 		/// <summary>
-		public Error(string code, string message, Predicate<TRoot> condition, params ConditionTypeSet[] sets)
+		public Error(string code, string message, Expression<Func<TRoot, bool>> condition, params ConditionTypeSet[] sets)
 			: base(code, message, sets)
 		{
-			CreateConditionRule<TRoot>(condition, null, null);
+			CreateConditionRule<TRoot>(condition);
 		}
+
+		/// <summary>
+		/// Creates a new error and rule
+		/// </summary>
+		/// <param name="message">Message describing the error</param>
+		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
+		/// <param name="properties">The set of properties to attach the condition to</param>
+		/// <param name="sets">The list of <see cref="ConditionTypeSet"/> instances the rule is associated with</param>
+		public Error(string message, Expression<Func<TRoot, bool>> condition, string properties, params ConditionTypeSet[] sets)
+			: this(null, message, condition, properties, sets)
+		{ }
+
+		/// <summary>
+		/// Creates a new error and rule
+		/// </summary>
+		/// <param name="code">Unique code for the condition type</param>
+		/// <param name="message">Message describing the error</param>
+		/// <param name="condition">Condition that when true, indicates this error applies to the specified object.</param>
+		/// <param name="properties">The set of properties to attach the condition to</param>
+		/// <param name="sets">The list of <see cref="ConditionTypeSet"/> instances the rule is associated with</param>
+		public Error(string code, string message, Expression<Func<TRoot, bool>> condition, string properties, params ConditionTypeSet[] sets)
+			: base(code, message, sets)
+		{
+			CreateConditionRule<TRoot>(condition, properties);
+		}
+
+		public Error<TRoot> OnInit()
+		{
+			((Rule<TRoot>)ConditionRule).OnInit();
+			return this;
+		}
+
+		public Error<TRoot> OnInitNew()
+		{
+			((Rule<TRoot>)ConditionRule).OnInitNew();
+			return this;
+		}
+
+		public Error<TRoot> OnInitExisting()
+		{
+			((Rule<TRoot>)ConditionRule).OnInitExisting();
+			return this;
+		}
+
 	}
 }

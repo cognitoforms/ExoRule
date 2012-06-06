@@ -5,6 +5,7 @@ using System.Text;
 using ExoModel;
 using System.Runtime.Serialization;
 using System.Resources;
+using System.Linq.Expressions;
 
 namespace ExoRule
 {
@@ -20,7 +21,6 @@ namespace ExoRule
 
 		static IEnumerable<ConditionType> Empty = new List<ConditionType>();
 		static Dictionary<string, ConditionType> conditionTypes = new Dictionary<string, ConditionType>();
-		static Dictionary<string, List<ConditionType>> conditionTypesByModelType = new Dictionary<string, List<ConditionType>>();
 		static Dictionary<Type, ResourceManager> resources = new Dictionary<Type, ResourceManager>();
 
 		string code;
@@ -111,7 +111,7 @@ namespace ExoRule
 			}
 		}
 
-		public Rule ConditionRule { get; set; }
+		public Rule ConditionRule { get; private set; }
 
 		#endregion
 
@@ -124,7 +124,21 @@ namespace ExoRule
 		/// <param name="condition"></param>
 		/// <param name="predicates"></param>
 		/// <param name="properties"></param>
-		protected void CreateConditionRule<TRoot>(Predicate<TRoot> condition, string[] predicates, string[] properties)
+		protected void CreateConditionRule<TRoot>(Expression<Func<TRoot, bool>> condition, params string[] properties)
+			where TRoot : class
+		{
+			// Creates the condition rule based on the specified condition expression
+			this.ConditionRule = new Rule<TRoot>.Condition(this, condition, properties);
+		}
+
+		/// <summary>
+		/// Allows subclasses to create an condition rule based on a concrete condition predicate.
+		/// </summary>
+		/// <typeparam name="TRoot"></typeparam>
+		/// <param name="condition"></param>
+		/// <param name="predicates"></param>
+		/// <param name="properties"></param>
+		protected void CreateConditionRule<TRoot>(Func<TRoot, bool> condition, string[] predicates, string[] properties)
 			where TRoot : class
 		{
 			// Automatically calculate predicates if they were not specified
@@ -134,18 +148,6 @@ namespace ExoRule
 			// Automatically default the properties to be the same as the predicates if they are not specified.
 			if (properties == null)
 				properties = predicates;
-
-			// Remember which conditions are associated with this model type
-			ModelType modelType = ModelContext.Current.GetModelType(typeof(TRoot));
-			List<ConditionType> conditions;
-			if (!conditionTypesByModelType.TryGetValue(modelType.Name, out conditions))
-			{
-				conditions = new List<ConditionType>();
-				conditionTypesByModelType[modelType.Name] = conditions;
-			}
-
-			if (!conditions.Contains(this))
-				conditions.Add(this);
 
 			// Create an condition rule based on the specified condition
 			this.ConditionRule = new Rule<TRoot>(RuleInvocationType.PropertyChanged, predicates, new ConditionType[] { this }, root => When(root, () => condition(root), properties));

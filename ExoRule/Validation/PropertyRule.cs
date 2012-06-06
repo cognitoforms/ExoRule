@@ -13,7 +13,7 @@ namespace ExoRule.Validation
 	/// <summary>
 	/// Abstract base for simple validation rules for properties in a model.
 	/// </summary>
-	public abstract class PropertyRule : Rule
+	public abstract class PropertyRule : Rule, IPropertyRule
 	{
 		#region Fields
 
@@ -44,9 +44,8 @@ namespace ExoRule.Validation
 			: base(rootType, conditionType.Code, invocationTypes, new ConditionType[] { conditionType }, predicates)
 		{
 			this.property = property;
-			if (conditionType != null)
-				conditionType.ConditionRule = this;
 			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+
 		}
 
 		#endregion
@@ -62,6 +61,14 @@ namespace ExoRule.Validation
 			get
 			{
 				return RootType.Properties[property];
+			}
+		}
+
+		public ConditionType ConditionType
+		{
+			get
+			{
+				return ConditionTypes.First();
 			}
 		}
 
@@ -117,6 +124,37 @@ namespace ExoRule.Validation
 		/// </summary>
 		/// <returns>true if <paramref name="root"/> should be associated with the <see cref="ConditionType"/></returns>
 		protected abstract bool ConditionApplies(ModelInstance root);
+
+		#endregion
+
+		#region IPropertyRule
+
+		/// <summary>
+		/// Gets the name of the property being calculated.
+		/// </summary>
+		string IPropertyRule.Property
+		{
+			get { return property; }
+		}
+
+		/// <summary>
+		/// Gets the unique name of the rule within the scope of the property to which it is assigned.
+		/// </summary>
+		string IPropertyRule.Name
+		{
+			get
+			{
+				// Get the type name
+				string name = GetType().Name;
+				
+				// Strip Rule off the end
+				if (name.EndsWith("Rule"))
+					name = name.Substring(0, name.Length - 4);
+
+				return name;
+
+			}
+		}
 
 		#endregion
 	}

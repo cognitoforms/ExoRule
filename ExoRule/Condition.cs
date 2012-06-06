@@ -88,8 +88,8 @@ namespace ExoRule
 			if (properties == null)
 				properties = new string[0];
 
-			// Create a single condition target if the specified proeprties are all on the root
-			if (!properties.Any(property => property.Contains('.')))
+			// Create a single condition target if the specified properties are all on the root
+			if (!properties.Any(property => property.Contains('.') || property.Contains('{')))
 				targets.Add(new ConditionTarget(this, root, properties));
 
 			// Otherwise, process the property paths to create the necessary sources
@@ -97,47 +97,38 @@ namespace ExoRule
 			{			
 				// Process each property path to build up the condition sources
 				foreach (string property in properties)
-				{
-					IEnumerable<ModelInstance> instances = new ModelInstance[] { root };
-					foreach (var step in property.Split('.'))
-					{
-						// Create condition targets for all instances for the current step along the path
-						foreach (ModelInstance instance in instances)
-						{
-							ConditionTarget conditionTarget = targets.FirstOrDefault(ct => ct.Target == instance);
-							if (conditionTarget == null)
-							{
-								conditionTarget = new ConditionTarget(this, instance, step);
-								targets.Add(conditionTarget);
-							}
-							else
-								conditionTarget.AddProperty(step);
-						}
+					AddTarget(root, root.Type.GetPath(property).FirstSteps);
+			}
+		}
 
-						// Cache the current step to make the closure work (.NET bug?)
-						string currentStep = step;
+		/// <summary>
+		/// Recursively attaches the current condition to targets in the model.
+		/// </summary>
+		/// <param name="target"></param>
+		/// <param name="steps"></param>
+		void AddTarget(ModelInstance target, IEnumerable<ModelStep> steps)
+		{
+			// Get or create a condition target for the current instance
+			ConditionTarget conditionTarget = targets.FirstOrDefault(ct => ct.Target == target);
+			if (conditionTarget == null)
+			{
+				conditionTarget = new ConditionTarget(this, target);
+				targets.Add(conditionTarget);
+			}
 
-						// Move down the path by getting the set of child instances
-						instances = instances.SelectMany<ModelInstance, ModelInstance>(instance =>
-						{
-							// Get the reference property for the current step
-							ModelReferenceProperty reference = instance.Type.Properties[currentStep] as ModelReferenceProperty;
+			// Process each step along the path
+			foreach (var step in steps)
+			{
+				// Add the property for the current step
+				conditionTarget.AddProperty(step.Property.Name);
 
-							// Return no instances if a reference property with the specified name could not be found
-							if (reference == null)
-								return new ModelInstance[0];
+				// Stop processing if the current step is a leaf property
+				if (step.NextSteps.Count == 0)
+					continue;
 
-							// Get the list of child instances for the current step
-							if (reference.IsList)
-								return instance.GetList(reference);
-							else
-							{
-								ModelInstance child = instance.GetReference(reference);
-								return child == null ? new ModelInstance[0] : new ModelInstance[] { child };
-							}
-						});
-					}
-				}
+				// Recursively process child instances
+				foreach (var child in step.GetInstances(target))
+					AddTarget(child, step.NextSteps);
 			}
 		}
 
@@ -149,6 +140,17 @@ namespace ExoRule
 		public static IEnumerable<Condition> GetConditions(ModelInstance instance)
 		{
 			return instance.GetExtension<RuleManager>().GetConditions();
+		}
+
+		/// <summary>
+		/// Gets the set of <see cref="Condition"/> instances associated with the specified <see cref="ModelInstance"/>.
+		/// </summary>
+		/// <param name="instance"></param>
+		/// <param name="filter"></param>
+		/// <returns></returns>
+		public static IEnumerable<Condition> GetConditions(ModelInstance instance, Func<ConditionTarget, bool> filter)
+		{
+			return instance.GetExtension<RuleManager>().GetConditions(filter);
 		}
 
 		/// <summary>
