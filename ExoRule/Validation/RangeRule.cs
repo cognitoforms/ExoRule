@@ -18,7 +18,7 @@ namespace ExoRule.Validation
 		#region Constructors
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum)
-			: this(rootType, property, minimum, maximum, RuleInvocationType.PropertyChanged)
+			: this(rootType, property, minimum, maximum, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
 		{ }
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, RuleInvocationType invocationTypes)
@@ -67,7 +67,7 @@ namespace ExoRule.Validation
 			object value = root.Instance.GetType().GetProperty(Property.Name).GetValue(root.Instance, null);
 
 			if (value == null || (value is double && double.IsNaN((double)value)))
-				return true;
+				return false;
 
 			// min <= value <= max
 			// CompareTo = 0: equal, >0: instance > value
