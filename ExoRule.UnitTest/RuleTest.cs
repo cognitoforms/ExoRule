@@ -3,11 +3,11 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ExoGraph;
+using ExoModel;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Collections.ObjectModel;
-using ExoGraph.UnitTest;
+using ExoModel.UnitTest;
 
 namespace ExoRule.UnitTest
 {
@@ -17,10 +17,10 @@ namespace ExoRule.UnitTest
 		[ClassInitialize]
 		public static void Initialize(TestContext options)
 		{
-			// Initialize the graph context to use the test graph type provider
-			GraphContext.Init(
+			// Initialize the model context to use the test model type provider
+			ModelContext.Init(
 				() => Rule.RegisterRules(Assembly.GetExecutingAssembly()),
-				new TestGraphTypeProvider(Assembly.GetExecutingAssembly()));
+				new TestModelTypeProvider(Assembly.GetExecutingAssembly()));
 		}
 
 		[TestMethod]
@@ -74,7 +74,7 @@ namespace ExoRule.UnitTest
 			Assert.AreEqual(1m, store.BeerGallons);
 
 			// Ensure that milk is ignored when counting the total number of instances in the specified filtered graph
-			Assert.AreEqual(3, GraphContext.Current.GetGraphType("Store").GetPath("Products<Beer>").GetInstances(GraphContext.Current.GetGraphInstance(store)).Count);
+			Assert.AreEqual(3, ModelContext.Current.GetModelType("Store").GetPath("Products<Beer>").GetInstances(ModelContext.Current.GetModelInstance(store)).Count);
 		}
 
 		[TestMethod]
@@ -107,7 +107,7 @@ namespace ExoRule.UnitTest
 		[TestMethod]
 		public void TestGetPath()
 		{
-			GraphType storeType = GraphContext.Current.GetGraphType<Store>();
+			ModelType storeType = ModelContext.Current.GetModelType<Store>();
 
 			var path = storeType.GetPath("{Products{Fat,Gallons},MilkFat,Milks{Percent,Brand,Gallons,Fat}}");
 		}
@@ -124,7 +124,7 @@ namespace ExoRule.UnitTest
 					}
 			};
 
-			var store2 = (Store)GraphContext.Current.GetGraphInstance(store).Clone("Milks").Invoke().Instance;
+			var store2 = (Store)ModelContext.Current.GetModelInstance(store).Clone("Milks").Invoke().Instance;
 			store2.Milks.First().Gallons = 10m;
 
 			Assert.AreEqual(0.015m, store.MilkFat);

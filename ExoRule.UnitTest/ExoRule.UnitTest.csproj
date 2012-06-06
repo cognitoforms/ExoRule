@@ -57,15 +57,15 @@
     <Compile Include="Store.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExoGraph\ExoGraph.UnitTest\ExoGraph.UnitTest.csproj">
+    <ProjectReference Include="..\..\ExoModel\ExoModel.UnitTest\ExoModel.UnitTest.csproj">
       <Project>{943D65C3-5E48-4771-8BA8-A8494C0FFB32}</Project>
-      <Name>ExoGraph.UnitTest</Name>
+      <Name>ExoModel.UnitTest</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\ExoGraph\ExoGraph\ExoGraph.csproj">
+    <ProjectReference Include="..\..\ExoModel\ExoModel\ExoModel.csproj">
       <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
-      <Name>ExoGraph</Name>
+      <Name>ExoModel</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ExoRules\ExoRule.csproj">
+    <ProjectReference Include="..\ExoRule\ExoRule.csproj">
       <Project>{B67D2642-A41A-42B2-8454-78ABA257008F}</Project>
       <Name>ExoRule</Name>
     </ProjectReference>
