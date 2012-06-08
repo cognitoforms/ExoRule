@@ -323,7 +323,7 @@ namespace ExoRule
 						var manager = e.Instance.GetExtension<RuleManager>();
 
 						// Determine if the rule needs to be run
-						if (e.IsFirstAccess || manager.IsPendingInvocation(this))
+						if ((e.IsFirstAccess && (!e.Property.IsPersisted || e.Instance.IsNew || manager.IsPendingInvocation(this))) || manager.IsPendingInvocation(this))
 						{
 							// Invoke the rule
 							Invoke(e.Instance, e);
