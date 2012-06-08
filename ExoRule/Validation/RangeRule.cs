@@ -24,8 +24,17 @@ namespace ExoRule.Validation
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, RuleInvocationType invocationTypes)
 			: base(rootType, property, CreateError(rootType, property, minimum, maximum), invocationTypes)
 		{
-			this.Minimum = minimum;
+            this.Minimum = minimum; 
 			this.Maximum = maximum;
+
+            Initialize += (sender, args) =>
+            {
+                if (this.Minimum != null && this.Minimum is IConvertible)
+                    this.Minimum = (IComparable) Convert.ChangeType(this.Minimum, ((ModelValueProperty)this.Property).PropertyType);
+
+                if (this.Maximum != null && this.Maximum is IConvertible)
+                    this.Maximum = (IComparable) Convert.ChangeType(this.Maximum, ((ModelValueProperty)this.Property).PropertyType);
+            };
 		}
 
 		#endregion
