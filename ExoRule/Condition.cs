@@ -162,7 +162,7 @@ namespace ExoRule
 		{
 			ModelInstance modelInstance = ModelContext.Current.GetModelInstance(instance);
 
-			if (instance == null)
+			if (modelInstance == null)
 				throw new ArgumentException("Specified instance is not a valid ModelInstance");
 
 			return modelInstance.GetExtension<RuleManager>().GetConditions();
