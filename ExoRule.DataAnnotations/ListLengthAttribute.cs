@@ -36,7 +36,7 @@ namespace ExoRule.DataAnnotations
 
 		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 		{
-			var instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
+			var instance = ModelInstance.GetModelInstance(validationContext.ObjectInstance);
 			var property = instance.Type.Properties[validationContext.MemberName];
 			int integerLengthValue = 0;
 

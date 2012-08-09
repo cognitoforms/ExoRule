@@ -30,7 +30,7 @@ namespace ExoRule.DataAnnotations
 
 		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 		{
-			ModelInstance instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
+			ModelInstance instance = ModelInstance.GetModelInstance(validationContext.ObjectInstance);
 			ModelProperty sourceProperty = instance.Type.Properties[validationContext.MemberName];
 
 			if (ComparisonPropertyName == null)

@@ -19,7 +19,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 
 	protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 	{
-		var instance = ModelContext.Current.GetModelInstance(validationContext.ObjectInstance);
+		var instance = ModelInstance.GetModelInstance(validationContext.ObjectInstance);
 		var source = new ModelSource(instance.Type, Source);
 		var property = instance.Type.Properties[validationContext.MemberName];
 
