@@ -54,7 +54,7 @@ namespace ExoRule.DataAnnotations
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		IEnumerable<Rule> IRuleProvider.GetRules(Type sourceType, string name)
+		public virtual IEnumerable<Rule> GetRules(Type sourceType, string name)
 		{
 			if (rules == null)
 			{
