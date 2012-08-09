@@ -221,7 +221,7 @@ namespace ExoRule
 		public Condition When(string message, object target, Func<bool> condition, params string[] properties)
 		{
 			// Get the current condition if it exists
-			ConditionTarget conditionTarget = ModelContext.Current.GetModelInstance(target).GetExtension<RuleManager>().GetCondition(this);
+			ConditionTarget conditionTarget = ModelInstance.GetModelInstance(target).GetExtension<RuleManager>().GetCondition(this);
 
 			// Add the condition on the target if it does not exist yet
 			if (condition())

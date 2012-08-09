@@ -669,10 +669,10 @@ namespace ExoRule
 						this.Action = root =>
 						{
 							// Get the source list
-							var source = RootType.Context.GetModelInstance(root).GetList((ModelReferenceProperty)prop);
+							var source = ModelInstance.GetModelInstance(root).GetList((ModelReferenceProperty)prop);
 
 							// Get the set of items the list should contain
-							var items = ((IEnumerable)getListItems(root)).Cast<object>().Select(instance => RootType.Context.GetModelInstance(instance));
+							var items = ((IEnumerable)getListItems(root)).Cast<object>().Select(instance => ModelInstance.GetModelInstance(instance));
 
 							// Update the list
 							source.Update(items);

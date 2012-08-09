@@ -82,7 +82,7 @@ namespace ExoRule
 		public void AddTarget(object target, params string[] properties)
 		{
 			// Get the root target instance
-			ModelInstance root = ModelContext.Current.GetModelInstance(target);
+			ModelInstance root = ModelInstance.GetModelInstance(target);
 
 			// Set the properties to an empty array if null
 			if (properties == null)
@@ -160,7 +160,7 @@ namespace ExoRule
 		/// <returns></returns>
 		public static IEnumerable<Condition> GetConditions(object instance)
 		{
-			ModelInstance modelInstance = ModelContext.Current.GetModelInstance(instance);
+			ModelInstance modelInstance = ModelInstance.GetModelInstance(instance);
 
 			if (modelInstance == null)
 				throw new ArgumentException("Specified instance is not a valid ModelInstance");
