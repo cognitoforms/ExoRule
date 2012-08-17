@@ -22,12 +22,18 @@ namespace ExoRule.Validation
 
 		public AllowedValuesRule(string rootType, string property, string source)
 			: this(rootType, property, source, RuleInvocationType.PropertyChanged)
-		{
-			this.Source = source;
-		}
+		{ }
 
 		public AllowedValuesRule(string rootType, string property, string source, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property), invocationTypes, CompareRule.GetPredicates(rootType, property, source))
+			: this(rootType, property, source, CreateError(rootType, property), invocationTypes)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, string source, string errorMessage)
+			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, string source, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes, CompareRule.GetPredicates(rootType, property, source))
 		{
 			this.Source = source;
 		}

@@ -23,7 +23,15 @@ namespace ExoRule.Validation
 		{ }
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum), invocationTypes)
+			: this(rootType, property, minimum, maximum, CreateError(rootType, property, minimum, maximum), invocationTypes)
+		{}
+
+		public StringLengthRule(string rootType, string property, int minimum, int maximum, string errorMessage)
+			: this(rootType, property, minimum, maximum, new Error(GetErrorCode(rootType, property, "StringLength"), errorMessage, null), RuleInvocationType.PropertyChanged)
+		{}
+
+		public StringLengthRule(string rootType, string property, int minimum, int maximum, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;

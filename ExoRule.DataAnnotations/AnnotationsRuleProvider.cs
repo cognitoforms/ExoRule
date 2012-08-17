@@ -68,23 +68,53 @@ namespace ExoRule.DataAnnotations
 					{
 						// Required Attribute
 						foreach (var attr in property.GetAttributes<RequiredAttribute>().Take(1))
-							rules.Add(new RequiredRule(type.Name, property.Name));
+						{
+							// Use the error message if one is specifed, otherwise use the default bahavior
+							if (string.IsNullOrEmpty(attr.ErrorMessage))
+								rules.Add(new RequiredRule(type.Name, property.Name));
+							else
+								rules.Add(new RequiredRule(type.Name, property.Name, attr.ErrorMessage));
+						}
 
 						// String Length Attribute
 						foreach (var attr in property.GetAttributes<StringLengthAttribute>().Take(1))
-							rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength));
+						{
+							// Use the error message if one is specifed, otherwise use the default bahavior
+							if (string.IsNullOrEmpty(attr.ErrorMessage))
+								rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength));
+							else
+								rules.Add(new StringLengthRule(type.Name, property.Name, attr.MinimumLength, attr.MaximumLength, attr.ErrorMessage));
+						}
 
 						// Range Attribute
 						foreach (var attr in property.GetAttributes<RangeAttribute>().Take(1))
-							rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum));
+						{
+							// Use the error message if one is specifed, otherwise use the default bahavior
+							if (string.IsNullOrEmpty(attr.ErrorMessage))
+								rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum));
+							else
+								rules.Add(new RangeRule(type.Name, property.Name, (IComparable)attr.Minimum, (IComparable)attr.Maximum, attr.ErrorMessage));
+						}
 
 						//Compare Attribute
 						foreach (var attr in property.GetAttributes<CompareAttribute>().Take(1))
-							rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator));
+						{
+							// Use the error message if one is specifed, otherwise use the default bahavior
+							if (string.IsNullOrEmpty(attr.ErrorMessage))
+								rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator));
+							else
+								rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator, attr.ErrorMessage));
+						}
 
 						// ListLength Attribute
 						foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
-							rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
+						{
+							// Use the error message if one is specifed, otherwise use the default bahavior
+							if (string.IsNullOrEmpty(attr.ErrorMessage))
+								rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
+							else 
+								rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp, attr.ErrorMessage));
+						}
 
                         // Regular Expression Attribute
                         foreach (var attr in property.GetAttributes<RegularExpressionAttribute>().Take(1))
@@ -94,12 +124,16 @@ namespace ExoRule.DataAnnotations
 						ModelReferenceProperty reference = property as ModelReferenceProperty;
 						if (reference != null)
 						{
+							string errorMessage = null;
+							foreach (var attr in property.GetAttributes<AllowedValuesAttribute>().Take(1))
+								errorMessage = attr.ErrorMessage;
+
 							foreach (var source in property.GetAttributes<AllowedValuesAttribute>()
 								.Select(attr => attr.Source)
 								.Union(reference.PropertyType.GetAttributes<AllowedValuesAttribute>()
 								.Select(attr => attr.Source.Contains('.') ? attr.Source : reference.PropertyType.Name + '.' + attr.Source)
 								.Take(1)))
-								rules.Add(new AllowedValuesRule(type.Name, property.Name, source));
+								rules.Add(string.IsNullOrEmpty(errorMessage) ? new AllowedValuesRule(type.Name, property.Name, source) : new AllowedValuesRule(type.Name, property.Name, source, errorMessage));
 						}
 					}
 				}

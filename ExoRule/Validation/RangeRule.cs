@@ -22,19 +22,27 @@ namespace ExoRule.Validation
 		{ }
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, minimum, maximum), invocationTypes)
+			: this(rootType, property, minimum, maximum, CreateError(rootType, property, minimum, maximum), invocationTypes)
+		{}
+
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, string errorMessage)
+			: this(rootType, property, minimum, maximum, new Error(GetErrorCode(rootType, property, "Range"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		{ }
+
+		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes)
 		{
-            this.Minimum = minimum; 
+			this.Minimum = minimum;
 			this.Maximum = maximum;
 
-            Initialize += (sender, args) =>
-            {
-                if (this.Minimum != null && this.Minimum is IConvertible)
-                    this.Minimum = (IComparable) Convert.ChangeType(this.Minimum, ((ModelValueProperty)this.Property).PropertyType);
+			Initialize += (sender, args) =>
+			{
+				if (this.Minimum != null && this.Minimum is IConvertible)
+					this.Minimum = (IComparable)Convert.ChangeType(this.Minimum, ((ModelValueProperty)this.Property).PropertyType);
 
-                if (this.Maximum != null && this.Maximum is IConvertible)
-                    this.Maximum = (IComparable) Convert.ChangeType(this.Maximum, ((ModelValueProperty)this.Property).PropertyType);
-            };
+				if (this.Maximum != null && this.Maximum is IConvertible)
+					this.Maximum = (IComparable)Convert.ChangeType(this.Maximum, ((ModelValueProperty)this.Property).PropertyType);
+			};
 		}
 
 		#endregion
@@ -64,11 +72,11 @@ namespace ExoRule.Validation
 				throw new ArgumentException("Either the minimum or maximum values must be specified for a range rule.");
 
 			return new Error(
-				GetErrorCode(rootType, property, "Range"), message, typeof(RangeRule),
-				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
-					.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
-					.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
+			GetErrorCode(rootType, property, "Range"), message, typeof(RangeRule),
+			(s) => s
+				.Replace("{property}", GetLabel(rootType, property))
+				.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
+				.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

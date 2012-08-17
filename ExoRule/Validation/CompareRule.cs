@@ -43,7 +43,35 @@ namespace ExoRule.Validation
 		/// <param name="compareOperator"></param>
 		/// <param name="invocationTypes"></param>
 		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, compareSource, compareOperator), invocationTypes, GetPredicates(rootType, property, compareSource))
+			: this(rootType, property, compareSource, compareOperator, CreateError(rootType, property, compareSource, compareOperator), invocationTypes)
+		{}
+
+		/// <summary>
+		/// Creates a new instance of <see cref="CompareRule"/> for the specified property.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="property"></param>
+		/// <param name="conditionType"></param>
+		/// <param name="comparePath"></param>
+		/// <param name="compareOperator"></param>
+		/// <param name="invocationTypes"></param>
+		/// <param name="errorMessage"></param>
+		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, string errorMessage)
+			: this(rootType, property, compareSource, compareOperator, new Error(GetErrorCode(rootType, property, "Compare"), errorMessage, null), RuleInvocationType.PropertyChanged)
+		{ }
+
+		/// <summary>
+		/// Creates a new instance of <see cref="CompareRule"/> for the specified property.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="property"></param>
+		/// <param name="conditionType"></param>
+		/// <param name="comparePath"></param>
+		/// <param name="compareOperator"></param>
+		/// <param name="error"></param>
+		/// <param name="invocationTypes"></param>
+		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes, GetPredicates(rootType, property, compareSource))
 		{
 			// Get the model property from the base class
 			ModelProperty p = Property;
@@ -57,8 +85,17 @@ namespace ExoRule.Validation
 				if (compareOperator != CompareOperator.Equal && compareOperator != CompareOperator.NotEqual)
 					throw new ArgumentException("The CompareRule only supports the Equal and NotEqual operators for reference properties.");
 			}
-			else if (!typeof(IComparable).IsAssignableFrom(((ModelValueProperty)p).PropertyType))
-				throw new ArgumentException("The CompareRule only supports value properties that implement IComparable.");
+			else
+			{
+				var propertyType = ((ModelValueProperty)p).PropertyType;
+
+				// If Nullable<T> check the underlying type
+				if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+					propertyType = Nullable.GetUnderlyingType(propertyType);
+
+				if (!typeof(IComparable).IsAssignableFrom(propertyType))
+					throw new ArgumentException("The CompareRule only supports value properties that implement IComparable.");
+			}
 
 			this.CompareSource = compareSource;
 			this.CompareOperator = compareOperator;

@@ -29,7 +29,15 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, compareValue, null, compareOperator), invocationTypes)
+			: this(rootType, property, compareValue, compareOperator, CreateError(rootType, property, compareValue, null, compareOperator), invocationTypes)
+		{ }
+
+		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, string errorMessage)
+			: this(rootType, property, compareValue, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		{ }
+
+		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes)
 		{
 			this.CompareValue = compareValue;
 			this.CompareOperator = compareOperator;
@@ -40,7 +48,15 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, 0, compareSource, compareOperator), invocationTypes)
+			: this(rootType, property, compareSource, compareOperator, CreateError(rootType, property, 0, compareSource, compareOperator), invocationTypes)
+		{ }
+
+		public ListLengthRule(string rootType, string property, int compareValue, string compareSource, CompareOperator compareOperator, string errorMessage)
+			: this(rootType, property, compareSource, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		{ }
+
+		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes)
 		{
 			this.CompareSource = compareSource;
 			this.CompareOperator = compareOperator;
@@ -130,7 +146,7 @@ namespace ExoRule.Validation
 					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
 					(s) => s
 						.Replace("{property}", GetLabel(rootType, property))
-						.Replace("{compareSource}", compareValue.ToString() ));
+						.Replace("{compareSource}", compareValue.ToString()));
 			}
 		}
 
