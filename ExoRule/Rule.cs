@@ -225,9 +225,9 @@ namespace ExoRule
 		/// </summary>
 		/// <param name="types"></param>
 		/// <returns></returns>
-		public static void RegisterRules(Assembly assembly)
+		public static void RegisterRules(params Assembly[] assemblies)
 		{
-			RegisterRules(assembly.GetTypes());
+			RegisterRules(assemblies.SelectMany(a => a.GetTypes()));
 		}
 
 		/// <summary>
