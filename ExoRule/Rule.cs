@@ -655,8 +655,13 @@ namespace ExoRule
 				// Perform delayed initialization to be able to reference the model type information
 				Initialize += (s, e) => 
 				{
+					var rootType = RootType;
+
+					if (rootType == null)
+						throw new ApplicationException(string.Format("Type '{0}' is not a model type.", typeof(TRoot).FullName));
+
 					// Get the model property
-					var prop = RootType.Properties[propInfo.Name];
+					var prop = rootType.Properties[propInfo.Name];
 					if (prop == null)
 						throw new ArgumentException("Only valid model properties can be calculated: " + propInfo.Name, "property");
 
