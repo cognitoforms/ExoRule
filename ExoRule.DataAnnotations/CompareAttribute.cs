@@ -11,7 +11,7 @@ namespace ExoRule.DataAnnotations
 	#region CompareAttribute
 
 
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
 	public class CompareAttribute : ValidationAttribute
 	{
 		/// <summary>
