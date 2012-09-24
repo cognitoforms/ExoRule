@@ -37,11 +37,17 @@ namespace ExoRule.Validation
 
 			Initialize += (sender, args) =>
 			{
+				var propertyType = ((ModelValueProperty)this.Property).PropertyType;
+
+				// If Nullable<T> check the underlying type
+				if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+					propertyType = Nullable.GetUnderlyingType(propertyType);
+
 				if (this.Minimum != null && this.Minimum is IConvertible)
-					this.Minimum = (IComparable)Convert.ChangeType(this.Minimum, ((ModelValueProperty)this.Property).PropertyType);
+					this.Minimum = (IComparable)Convert.ChangeType(this.Minimum, propertyType);
 
 				if (this.Maximum != null && this.Maximum is IConvertible)
-					this.Maximum = (IComparable)Convert.ChangeType(this.Maximum, ((ModelValueProperty)this.Property).PropertyType);
+					this.Maximum = (IComparable)Convert.ChangeType(this.Maximum, propertyType);
 			};
 		}
 
