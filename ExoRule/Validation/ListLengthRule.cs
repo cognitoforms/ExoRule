@@ -37,7 +37,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
+			: base(rootType, property, error, invocationTypes, property)
 		{
 			this.CompareValue = compareValue;
 			this.CompareOperator = compareOperator;
@@ -56,7 +56,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
+			: base(rootType, property, error, invocationTypes, property)
 		{
 			this.CompareSource = compareSource;
 			this.CompareOperator = compareOperator;

@@ -31,7 +31,7 @@ namespace ExoRule.Validation
 		{}
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
+			: base(rootType, property, error, invocationTypes, property)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;

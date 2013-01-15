@@ -30,7 +30,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
+			: base(rootType, property, error, invocationTypes, property)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;

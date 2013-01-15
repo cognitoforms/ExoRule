@@ -31,7 +31,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public StringFormatRule(string rootType, string property, Func<string> formatDescription, Func<Regex> formatExpression, Func<string> reformatExpression, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, formatDescription), invocationTypes)
+			: base(rootType, property, CreateError(rootType, property, formatDescription), invocationTypes, property)
 		{
 			this.formatDescription = formatDescription;
 			this.formatExpression = formatExpression;

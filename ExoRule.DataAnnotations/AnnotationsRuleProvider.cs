@@ -118,7 +118,7 @@ namespace ExoRule.DataAnnotations
 
                         // Regular Expression Attribute
                         foreach (var attr in property.GetAttributes<RegularExpressionAttribute>().Take(1))
-                            rules.Add(new StringFormatRule(type.Name, property.Name, () => attr.ErrorMessage, () => new Regex(attr.Pattern), null));
+							rules.Add(new StringFormatRule(type.Name, property.Name, () => attr.ErrorMessage, () => new Regex(attr.Pattern), () => (attr is RegularExpressionReformatAttribute) ? ((RegularExpressionReformatAttribute)attr).ReformatExpression : null, RuleInvocationType.PropertyChanged));
                         
                         // Allowed Values Attribute
 						ModelReferenceProperty reference = property as ModelReferenceProperty;
