@@ -40,9 +40,9 @@ namespace ExoRule.DataAnnotations
 		/// based on data annotation attributes associated with properties declared on each type.
 		/// </summary>
 		/// <param name="assembly"></param>
-		public AnnotationsRuleProvider(Assembly assembly)
+		public AnnotationsRuleProvider(params Assembly[] assemblies)
 		{
-			this.types = assembly.GetTypes();
+			this.types = assemblies.SelectMany(a => a.GetTypes());
 		}
 
 		#endregion
