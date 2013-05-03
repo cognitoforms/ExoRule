@@ -21,7 +21,13 @@ public class AllowedValuesAttribute : ValidationAttribute
 	{
 		var instance = ModelInstance.GetModelInstance(validationContext.ObjectInstance);
 		var source = new ModelSource(instance.Type, Source);
-		var property = instance.Type.Properties[validationContext.MemberName];
+
+		// Get the member name by looking up using the display name, since the member name is mysteriously null for MVC3 projects
+		var propertyName = validationContext.MemberName ?? validationContext.ObjectType.GetProperties()
+			.Where(p => p.GetCustomAttributes(false).OfType<DisplayAttribute>()
+				.Any(a => a.Name == validationContext.DisplayName)).Select(p => p.Name).FirstOrDefault();
+
+		var property = instance.Type.Properties[propertyName];
 
 		// Get the list of allowed values
 		ModelInstanceList allowedValues = source.GetList(instance);
@@ -36,7 +42,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 
 			// Determine whether the property value is in the list of allowed values
 			if (!(items == null || items.All(item => allowedValues.Contains(item))))
-				return new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				return new ValidationResult("Invalid value", new string[] { propertyName });
 		}
 
 		// Reference Property
@@ -47,7 +53,7 @@ public class AllowedValuesAttribute : ValidationAttribute
 
 			// Determine whether the property value is in the list of allowed values
 			if (!(item == null || allowedValues.Contains(item)))
-				return new ValidationResult("Invalid value", new string[] { validationContext.MemberName });
+				return new ValidationResult("Invalid value", new string[] { propertyName });
 		}
 
 		return null;
