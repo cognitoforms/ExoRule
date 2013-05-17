@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -186,8 +187,31 @@ namespace ExoRule
 						.SelectMany(field =>
 						{
 							IRuleProvider ruleProvider = (IRuleProvider)field.GetValue(null);
+
 							if (ruleProvider != null)
 								return ruleProvider.GetRules(type, field.Name);
+							else
+							{
+								StackTrace stackTrace = new StackTrace();
+								List<MethodBase> callStackMethods = stackTrace.GetFrames()
+									.Select(f => f.GetMethod())
+									.ToList();
+
+								Type currentType = callStackMethods.First().DeclaringType;
+								
+								callStackMethods.Reverse();
+								MethodBase ruleProviderCall = callStackMethods.FirstOrDefault(method => currentType != method.DeclaringType && typeof(IRuleProvider).IsAssignableFrom(method.DeclaringType));
+
+								if (ruleProviderCall != null)
+								{
+									string errorMessage = string.Format(
+										"'{0}'.'{1}' is null, declared as a '{2}', and '{3}'.'{4}' is creating/accessing rules. As such, it appears that the '{2}' is still initializing and rules will not register properly. Please see the call stack.",
+										type.Name, field.Name, typeof(IRuleProvider).Name, ruleProviderCall.DeclaringType.Name, ruleProviderCall.Name
+									);
+									throw new ApplicationException(errorMessage);
+								}
+							}
+
 							return new Rule[] { };
 						})
 						.Where(rule => rule != null)
