@@ -23,8 +23,11 @@ namespace ExoRule.Validation
 		{ }
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, RuleInvocationType invocationTypes)
-			: this(rootType, property, minimum, maximum, CreateError(rootType, property, minimum, maximum), invocationTypes)
-		{}
+			: base(rootType, property, CreateError(property, minimum, maximum), invocationTypes, property)
+		{
+			this.Minimum = minimum;
+			this.Maximum = maximum;
+		}
 
 		public StringLengthRule(string rootType, string property, int minimum, int maximum, string errorMessage)
 			: this(rootType, property, minimum, maximum, new Error(GetErrorCode(rootType, property, "StringLength"), errorMessage, null), RuleInvocationType.PropertyChanged)
@@ -49,7 +52,7 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int minimum, int maximum)
+		static Func<ModelType, ConditionType> CreateError(string property, int minimum, int maximum)
 		{
 			string message;
 			if (minimum > 0 && maximum > 0)
@@ -61,12 +64,15 @@ namespace ExoRule.Validation
 			else
 				throw new ArgumentException("Either the minimum or maximum characters must be greater than zero for a string length rule.");
 
-			return new Error(
-				GetErrorCode(rootType, property, "StringLength"), message, typeof(StringLengthRule),
+			return (ModelType rootType) =>
+			{
+				var label = rootType.Properties[property].Label;
+				return new Error(GetErrorCode(rootType.Name, property, "StringLength"), message, typeof(StringLengthRule),
 				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{property}", label)
 					.Replace("{min}", minimum.ToString())
 					.Replace("{max}", maximum.ToString()), null);
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

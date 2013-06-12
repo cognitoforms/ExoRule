@@ -22,8 +22,10 @@ namespace ExoRule.Validation
 		{ }
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, RuleInvocationType invocationTypes)
-			: this(rootType, property, minimum, maximum, CreateError(rootType, property, minimum, maximum), invocationTypes)
-		{}
+			: base(rootType, property, CreateError(property, minimum, maximum), invocationTypes, property)
+		{
+			SetRange(minimum, maximum);
+		}
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, string errorMessage)
 			: this(rootType, property, minimum, maximum, new Error(GetErrorCode(rootType, property, "Range"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
@@ -31,6 +33,23 @@ namespace ExoRule.Validation
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum, Error error, RuleInvocationType invocationTypes)
 			: base(rootType, property, error, invocationTypes, property)
+		{
+			SetRange(minimum, maximum);
+		}
+
+		#endregion
+
+		#region Properties
+
+		public IComparable Minimum { get; private set; }
+
+		public IComparable Maximum { get; private set; }
+
+		#endregion
+
+		#region Methods
+
+		void SetRange(IComparable minimum, IComparable maximum)
 		{
 			this.Minimum = minimum;
 			this.Maximum = maximum;
@@ -51,19 +70,7 @@ namespace ExoRule.Validation
 			};
 		}
 
-		#endregion
-
-		#region Properties
-
-		public IComparable Minimum { get; private set; }
-
-		public IComparable Maximum { get; private set; }
-
-		#endregion
-
-		#region Methods
-
-		static Error CreateError(string rootType, string property, IComparable minimum, IComparable maximum)
+		static Func<ModelType, ConditionType> CreateError(string property, IComparable minimum, IComparable maximum)
 		{
 			bool isDate = minimum is DateTime || maximum is DateTime;
 			
@@ -77,17 +84,17 @@ namespace ExoRule.Validation
 			else
 				throw new ArgumentException("Either the minimum or maximum values must be specified for a range rule.");
 
-			return new Error(
-			GetErrorCode(rootType, property, "Range"), message, typeof(RangeRule),
-			(s) => s
-				.Replace("{property}", GetLabel(rootType, property))
-				.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
-				.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
+			return (ModelType rootType) => new Error(
+				GetErrorCode(rootType.Name, property, "Range"), message, typeof(RangeRule),
+				(s) => s
+					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
+					.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)
 		{
-			object value = root.Instance.GetType().GetProperty(Property.Name).GetValue(root.Instance, null);
+			object value = root[Property];
 
 			if (value == null || (value is double && double.IsNaN((double)value)))
 				return false;

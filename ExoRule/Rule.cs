@@ -20,8 +20,8 @@ namespace ExoRule
 	{
 		#region Fields
 
-		internal ConditionType[] conditionTypes;
-		string rootType;
+		string rootTypeName;
+		ModelType rootType;
 
 		#endregion
 
@@ -57,10 +57,10 @@ namespace ExoRule
 		/// <param name="predicates"></param>
 		public Rule(string rootType, string name, RuleInvocationType invocationTypes, ConditionType[] conditionTypes, params string[] predicates)
 		{
-			this.rootType = rootType;
+			this.rootTypeName = rootType;
 			this.Name = name;
 			this.InvocationTypes = invocationTypes;
-			this.conditionTypes = conditionTypes ?? new ConditionType[0];
+			this.ConditionTypes = conditionTypes ?? new ConditionType[0];
 
 			// Default the execution location to server
 			this.ExecutionLocation = RuleExecutionLocation.Server;
@@ -77,7 +77,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets the name of the rule.
 		/// </summary>
-		public string Name { get; private set; }
+		public string Name { get; protected set; }
 
 		/// <summary>
 		/// Gets the root <see cref="ModelType"/> of the rule.
@@ -86,7 +86,7 @@ namespace ExoRule
 		{
 			get
 			{
-				return ModelContext.Current.GetModelType(rootType);
+				return rootType ?? ModelContext.Current.GetModelType(rootTypeName);
 			}
 		}
 
@@ -98,7 +98,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets or sets the execution location governing where the rule will run: server (default) and/or client.
 		/// </summary>
-		public RuleExecutionLocation ExecutionLocation { get; set; }
+		public RuleExecutionLocation ExecutionLocation { get; protected set; }
 
 		/// <summary>
 		/// Gets the set of predicate paths that trigger property change invocations.
@@ -116,22 +116,19 @@ namespace ExoRule
 		/// </summary>
 		public IEnumerable<ConditionType> ConditionTypes
 		{
-			get
-			{
-				return conditionTypes;
-			}
+			get; protected set;
 		}
-
-		/// <summary>
-		/// Initialization event raised once for each rule immediately before it is registered
-		/// for the first time, allowing rules to delay one time setup logic.
-		/// </summary>
-		protected event EventHandler Initialize;
 
 		#endregion
 
 		#region Events
 
+		/// <summary>
+		/// Initialization event raised once for each rule immediately before it is registered
+		/// for the first time, allowing rules to delay one time setup logic.
+		/// </summary>
+		protected internal event EventHandler Initialize;
+	
 		public static event EventHandler BeforeInvoke;
 
 		public static event EventHandler AfterInvoke;
@@ -240,6 +237,7 @@ namespace ExoRule
 		/// <returns></returns>
 		public static void RegisterRules(IEnumerable<Type> types)
 		{
+			// Register each of the specified rules
 			foreach (Rule rule in GetRules(types))
 				rule.Register();
 		}
@@ -297,8 +295,16 @@ namespace ExoRule
 		/// <summary>
 		/// Registers the rule with the current <see cref="ModelContext"/>.
 		/// </summary>
-		public void Register()
+		public void Register(ModelType rootType = null)
 		{
+			// Determine if the rule is be registered for a specific root model type
+			if (rootType != null)
+			{
+				if (this.rootType != null)
+					throw new InvalidOperationException("Rules cannot be explicitly registered for more than one model type.");
+				this.rootType = rootType;
+			}
+
 			// Raise the Initialization event the first time the rule is registered
 			if (Initialize != null)
 			{
@@ -313,6 +319,15 @@ namespace ExoRule
 			// Automatically detect predicates if none were specified
 			if (Predicates == null && ((InvocationTypes & (RuleInvocationType.PropertyChanged | RuleInvocationType.PropertyGet)) > 0))
 				SetPredicates(GetPredicates());
+
+			// Track and validate uniqueness of condition types
+			HashSet<ConditionType> conditionTypes = RootType.GetExtension<HashSet<ConditionType>>();
+			foreach (var conditionType in ConditionTypes)
+			{
+				if (conditionTypes.Contains(conditionType))
+					throw new InvalidOperationException("Registered condition types must be unique for each model type.");
+				conditionTypes.Add(conditionType);
+			}
 
 			// Track the rule registration for the root model type
 			List<Rule> rules = RootType.GetExtension<List<Rule>>();
@@ -609,7 +624,7 @@ namespace ExoRule
 
 		public Rule<TRoot> Asserts(params ConditionType[] conditionTypes)
 		{
-			this.conditionTypes = conditionTypes;
+			this.ConditionTypes = conditionTypes;
 			return this;
 		}
 

@@ -23,7 +23,7 @@ namespace ExoRule.Validation
 		{ }
 
 		public OwnerRule(string rootType, string property, RuleInvocationType invocationTypes)
-			: base(rootType, property, null, invocationTypes, property)
+			: base(rootType, property, (Func<ModelType, ConditionType>)null, invocationTypes, property)
 		{ }
 
 		#endregion

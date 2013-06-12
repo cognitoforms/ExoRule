@@ -23,7 +23,6 @@ namespace ExoRule
 		static Dictionary<string, ConditionType> conditionTypes = new Dictionary<string, ConditionType>();
 		static Dictionary<Type, ResourceManager> resources = new Dictionary<Type, ResourceManager>();
 
-		string code;
 		string message;
 		Func<string, string> translator;
 
@@ -67,34 +66,8 @@ namespace ExoRule
 
 		#region Properties
 
-		public string Code
-		{
-			get
-			{
-				return code;
-			}
-			internal set
-			{
-				// The code cannot be changed once assigned
-				if (code != null)
-					throw new InvalidOperationException("The code cannot be changed once it has been assigned to a condition type.");
-
-				// Ignore null codes
-				if (value == null)
-					return;
-
-				// Set the code
-				code = value;
-
-				// Verify that the code has not already been assigned
-				if (conditionTypes.ContainsKey(code))
-					throw new InvalidOperationException("A condition type has already been defined with the same code.");
-
-				// Register the condition type based on its unique code
-				conditionTypes.Add(code, this);
-			}
-		}
-
+		public string Code { get; internal set; }
+	
 		public ConditionCategory Category { get; private set; }
 
 		public IEnumerable<ConditionTypeSet> Sets { get; private set; }
@@ -160,12 +133,12 @@ namespace ExoRule
 
 		public override bool Equals(object obj)
 		{
-			return obj is ConditionType && ((ConditionType)obj).code == code;
+			return obj is ConditionType && ((ConditionType)obj).Code == Code;
 		}
 
 		public override int GetHashCode()
 		{
-			return code.GetHashCode();
+			return Code.GetHashCode();
 		}
 
 		public static bool operator ==(ConditionType e1, ConditionType e2)
@@ -256,7 +229,7 @@ namespace ExoRule
 		/// <returns></returns>
 		public static IEnumerable<ConditionType> GetConditionTypes(ModelType type)
 		{
-			return Rule.GetRegisteredRules(type).SelectMany(rule => rule.ConditionTypes).Distinct();
+			return type.GetExtension<HashSet<ConditionType>>();
 		}
 
 		/// <summary>

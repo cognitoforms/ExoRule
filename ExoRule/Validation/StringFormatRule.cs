@@ -26,12 +26,8 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public StringFormatRule(string rootType, string property, Func<string> formatDescription, Func<Regex> formatExpression, Func<string> reformatExpression)
-			: this(rootType, property, formatDescription, formatExpression, reformatExpression, RuleInvocationType.PropertyChanged)
-		{ }
-
-		public StringFormatRule(string rootType, string property, Func<string> formatDescription, Func<Regex> formatExpression, Func<string> reformatExpression, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(rootType, property, formatDescription), invocationTypes, property)
+		public StringFormatRule(string rootType, string property, Func<string> formatDescription, Func<Regex> formatExpression, Func<string> reformatExpression = null, RuleInvocationType invocationTypes = RuleInvocationType.PropertyChanged)
+			: base(rootType, property, CreateError(property, formatDescription), invocationTypes, property)
 		{
 			this.formatDescription = formatDescription;
 			this.formatExpression = formatExpression;
@@ -70,10 +66,10 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, Func<string> formatDescription)
+		static Func<ModelType, ConditionType> CreateError(string property, Func<string> formatDescription)
 		{
-			return new Error(
-				GetErrorCode(rootType, property, "StringFormat"), "string-format", typeof(StringFormatRule),
+			return (ModelType rootType) => new Error(
+				GetErrorCode(rootType.Name, property, "StringFormat"), "string-format", typeof(StringFormatRule),
 				(s) => s
 					.Replace("{property}", GetLabel(rootType, property))
 					.Replace("{formatDescription}", formatDescription()));

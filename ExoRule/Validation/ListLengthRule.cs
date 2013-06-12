@@ -29,8 +29,11 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: this(rootType, property, compareValue, compareOperator, CreateError(rootType, property, compareValue, null, compareOperator), invocationTypes)
-		{ }
+			: base(rootType, property, CreateError(property, compareValue, null, compareOperator), invocationTypes)
+		{
+			this.CompareValue = compareValue;
+			this.CompareOperator = compareOperator;
+		}
 
 		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, string errorMessage)
 			: this(rootType, property, compareValue, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
@@ -48,8 +51,11 @@ namespace ExoRule.Validation
 		{ }
 
 		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: this(rootType, property, compareSource, compareOperator, CreateError(rootType, property, 0, compareSource, compareOperator), invocationTypes)
-		{ }
+			: base(rootType, property, CreateError(property, 0, compareSource, compareOperator), invocationTypes)
+		{
+			this.CompareSource = compareSource;
+			this.CompareOperator = compareOperator;
+		}
 
 		public ListLengthRule(string rootType, string property, int compareValue, string compareSource, CompareOperator compareOperator, string errorMessage)
 			: this(rootType, property, compareSource, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
@@ -99,55 +105,56 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, int compareValue, string compareSource, CompareOperator op)
+		static Func<ModelType, ConditionType> CreateError(string property, int compareValue, string compareSource, CompareOperator op)
 		{
-			string message;
-			switch (op)
+			return (ModelType rootType) =>
 			{
-				case CompareOperator.Equal:
-					message = "listlength-compare-equal";
-					break;
-				case CompareOperator.NotEqual:
-					message = "listlength-compare-not-equal";
-					break;
-				case CompareOperator.GreaterThan:
-					message = "listlength-compare-greater-than";
-					break;
-				case CompareOperator.GreaterThanEqual:
-					message = "listlength-compare-greater-than-or-equal";
-					break;
-				case CompareOperator.LessThan:
-					message = "listlength-compare-less-than";
-					break;
-				case CompareOperator.LessThanEqual:
-					message = "listlength-compare-less-than-or-equal";
-					break;
-				default:
-					throw new ArgumentException("Invalid comparison operator for list length rule");
-			}
+				string message;
+				switch (op)
+				{
+					case CompareOperator.Equal:
+						message = "listlength-compare-equal";
+						break;
+					case CompareOperator.NotEqual:
+						message = "listlength-compare-not-equal";
+						break;
+					case CompareOperator.GreaterThan:
+						message = "listlength-compare-greater-than";
+						break;
+					case CompareOperator.GreaterThanEqual:
+						message = "listlength-compare-greater-than-or-equal";
+						break;
+					case CompareOperator.LessThan:
+						message = "listlength-compare-less-than";
+						break;
+					case CompareOperator.LessThanEqual:
+						message = "listlength-compare-less-than-or-equal";
+						break;
+					default:
+						throw new ArgumentException("Invalid comparison operator for list length rule");
+				}
 
-			// Get the comparison source
-			if (!String.IsNullOrEmpty(compareSource))
-			{
-				var source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
-				var sourceType = source.SourceType;
-				var sourceProperty = source.SourceProperty;
-
-				return new Error(
-					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
-					(s) => s
-						.Replace("{property}", GetLabel(rootType, property))
-						.Replace("{compareSource}", GetLabel(sourceType, sourceProperty)));
-			}
-			else
-			{
-				//there is no compare source and we are using a static length
-				return new Error(
-					GetErrorCode(rootType, property, "ListLength"), message, typeof(ListLengthRule),
-					(s) => s
-						.Replace("{property}", GetLabel(rootType, property))
-						.Replace("{compareSource}", compareValue.ToString()));
-			}
+				// Get the comparison source
+				var label = GetLabel(rootType, property);
+				if (!String.IsNullOrEmpty(compareSource))
+				{
+					var sourceLabel = GetSourceLabel(rootType, compareSource);
+					return new Error(
+						GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
+						(s) => s
+							.Replace("{property}", label)
+							.Replace("{compareSource}", sourceLabel));
+				}
+				else
+				{
+					//there is no compare source and we are using a static length
+					return new Error(
+						GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
+						(s) => s
+							.Replace("{property}", label)
+							.Replace("{compareSource}", compareValue.ToString()));
+				}
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

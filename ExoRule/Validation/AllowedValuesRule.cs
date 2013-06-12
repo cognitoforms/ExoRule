@@ -3,6 +3,8 @@ using System.Runtime.Serialization;
 using ExoModel;
 using System;
 using System.Collections.Generic;
+using System.Collections;
+using System.Linq.Expressions;
 
 namespace ExoRule.Validation
 {
@@ -14,7 +16,9 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		ModelSource source;
+		LambdaExpression expression;
+		ModelSource modelSource;
+		Type sourceType;
 
 		#endregion
 
@@ -25,40 +29,63 @@ namespace ExoRule.Validation
 		{ }
 
 		public AllowedValuesRule(string rootType, string property, string source, RuleInvocationType invocationTypes)
-			: this(rootType, property, source, CreateError(rootType, property), invocationTypes)
-		{ }
+			: base(rootType, property, CreateError(property), invocationTypes)
+		{
+			InitializeSource(source, null);
+		}
 
 		public AllowedValuesRule(string rootType, string property, string source, string errorMessage)
 			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged)
 		{ }
 
 		public AllowedValuesRule(string rootType, string property, string source, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes, CompareRule.GetPredicates(rootType, property, source))
+			: base(rootType, property, error, invocationTypes)
 		{
-			this.Source = source;
+			InitializeSource(source, null);
+		}
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source)
+			: this(rootType, property, source, RuleInvocationType.PropertyChanged)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(property), invocationTypes)
+		{
+			InitializeSource(null, source);
+		}
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, string errorMessage)
+			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, Error error, RuleInvocationType invocationTypes)
+			: base(rootType, property, error, invocationTypes)
+		{
+			InitializeSource(null, source);
 		}
 
 		#endregion
 
 		#region Properties
 
-		public string Source
-		{
-			get
-			{
-				return source.Path;
-			}
-			private set
-			{
-				source = new ModelSource(RootType, value);
-			}
-		}
+		public string Source { get; private set; }
+
+		public string Path { get; private set; }
 
 		public bool IsStaticSource
 		{
 			get
 			{
-				return source.IsStatic;
+				return (modelSource != null && modelSource.IsStatic) || (sourceType != null && String.IsNullOrEmpty(Path));
+			}
+		}
+
+		public ModelExpression SourceExpression
+		{
+			get
+			{
+				return expression != null ? new ModelExpression(RootType, expression) : 
+					sourceType != null ? RootType.GetExpression(sourceType, Source) : null;
 			}
 		}
 
@@ -66,39 +93,111 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property)
+		void InitializeSource(string source, LambdaExpression expression)
 		{
-			return new Error(
-				GetErrorCode(rootType, property, "AllowedValues"),
+			// Store the source
+			this.Source = source;
+
+			// Initialize the source during the rule initialization phase
+			Initialize += (s, e) =>
+			{	
+				var rootType = RootType;
+				var property = Property;
+
+				// First, see if an explicit expression was specified for the rule source
+				if (expression != null)
+				{
+					this.expression = expression;
+					var sourceExpression = new ModelExpression(rootType, expression);
+					Path = sourceExpression.Path.Path;
+				}
+
+				// Then see if the source represents a simple model source path
+				else if (ModelSource.TryGetSource(RootType, source, out modelSource))
+					Path = modelSource.IsStatic ? "" : modelSource.Path;
+
+				// Then see if the source is a valid model expression
+				else
+				{
+					sourceType = property is ModelValueProperty ? 
+						typeof(IEnumerable<>).MakeGenericType(((ModelValueProperty)property).PropertyType) :
+						((ModelReferenceProperty)property).PropertyType is IReflectionModelType ? 
+						typeof(IEnumerable<>).MakeGenericType(((IReflectionModelType)((ModelReferenceProperty)property).PropertyType).UnderlyingType) 
+						: typeof(IEnumerable);
+					var sourceExpression = rootType.GetExpression(sourceType, source);
+					Path = sourceExpression.Path.Path;
+				}
+
+				// Set the predicates based on the property and model path
+				Predicates = String.IsNullOrEmpty(Path) ? new string[] { property.Name } : new string[] { property.Name, Path };
+			};
+				
+
+		}
+
+		static Func<ModelType, ConditionType> CreateError(string property)
+		{
+			return (ModelType rootType) => new Error(
+				GetErrorCode(rootType.Name, property, "AllowedValues"),
 				"allowed-values", typeof(AllowedValuesRule), 
 				(s) => s.Replace("{property}", GetLabel(rootType, property)), null);
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)
 		{
-			// Get the list of allowed values
-			ModelInstanceList allowedValues = source.GetList(root);
+			// Get the allowed values
+			var allowedValues = GetAllowedValues(root);
+
+			// Always consider as valid when there are no allowed values
 			if (allowedValues == null)
 				return false;
 
-			// List Property
-			if (Property.IsList)
+			// Value properties
+			if (Property is ModelValueProperty)
 			{
-				// Get the current property value
-				ModelInstanceList values = root.GetList((ModelReferenceProperty)Property);
+				// List
+				if (Property.IsList)
+				{
+					// Get the current property value
+					var values = root.GetValue((ModelValueProperty)Property) as IEnumerable;
 
-				// Determine whether the property value is in the list of allowed values
-				return !(values == null || values.All(value => allowedValues.Contains(value)));
+					// Determine whether the property value is in the list of allowed values
+					return !(values == null || values.Cast<object>().All(value => allowedValues.Contains(value)));
+				}
+
+				// Value
+				else
+				{
+					// Get the current property value
+					var value = root.GetValue((ModelValueProperty)Property);
+
+					// Determine whether the property value is in the list of allowed values
+					return !(value == null || allowedValues.Contains(value));
+				}
 			}
 
-			// Reference Property
+			// Reference properties
 			else
 			{
-				// Get the current property value
-				ModelInstance value = root.GetReference((ModelReferenceProperty)Property);
+				// List Property
+				if (Property.IsList)
+				{
+					// Get the current property value
+					ModelInstanceList values = root.GetList((ModelReferenceProperty)Property);
 
-				// Determine whether the property value is in the list of allowed values
-				return !(value == null || allowedValues.Contains(value));
+					// Determine whether the property value is in the list of allowed values
+					return !(values == null || values.All(value => allowedValues.Contains(value)));
+				}
+
+				// Reference Property
+				else
+				{
+					// Get the current property value
+					ModelInstance value = root.GetReference((ModelReferenceProperty)Property);
+
+					// Determine whether the property value is in the list of allowed values
+					return !(value == null || allowedValues.Contains(value));
+				}
 			}
 		}
 
@@ -108,13 +207,53 @@ namespace ExoRule.Validation
 		/// <param name="instance"></param>
 		/// <param name="property"></param>
 		/// <returns></returns>
-		public static IEnumerable<ModelInstance> GetAllowedValues(ModelInstance instance, ModelProperty property)
+		public static IEnumerable<object> GetAllowedValues(ModelInstance root, ModelProperty property)
 		{
-			var allowedValuesRule = Rule.GetRegisteredRules(property.DeclaringType).OfType<AllowedValuesRule>().Where(r => r.Property == property).FirstOrDefault();
-			if (allowedValuesRule == null)
+			var rule = Rule.GetRegisteredRules(property.DeclaringType).OfType<AllowedValuesRule>().Where(r => r.Property == property).FirstOrDefault();
+			if (rule == null)
 				return null;
 
-			return allowedValuesRule.source.GetList(instance);
+			return rule.GetAllowedValues(root);
+		}
+
+		IEnumerable<object> GetAllowedValues(ModelInstance root)
+		{
+			// Value properties
+			if (Property is ModelValueProperty)
+			{
+				// Get the list of allowed values
+				IEnumerable instances;
+				if (modelSource != null)
+					instances = modelSource.GetValue(root) as IEnumerable;
+				else
+					instances = SourceExpression.Invoke(root) as IEnumerable;
+				return instances != null ? instances.Cast<object>().ToArray() : null;
+			}
+
+			// Reference properties
+			else
+			{
+				// Get the model type of the property the rule applies to
+				ModelType propertyType = ((ModelReferenceProperty)Property).PropertyType;
+
+				// Get the list of allowed values
+				if (modelSource != null)
+				{
+					// Model Source
+					var instances = modelSource.GetList(root);
+					if (instances != null)
+						return instances.ToArray();
+				}
+				else
+				{
+					// Model Expression
+					var instances = SourceExpression.Invoke(root) as IEnumerable;
+					if (instances != null)
+						return instances.Cast<object>().Select(i => propertyType.GetModelInstance(i)).ToArray();
+				}
+			}
+
+			return null;
 		}
 
 		#endregion

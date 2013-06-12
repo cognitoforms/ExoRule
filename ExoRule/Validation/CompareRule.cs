@@ -43,8 +43,13 @@ namespace ExoRule.Validation
 		/// <param name="compareOperator"></param>
 		/// <param name="invocationTypes"></param>
 		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: this(rootType, property, compareSource, compareOperator, CreateError(rootType, property, compareSource, compareOperator), invocationTypes)
-		{}
+			: base(rootType, property, CreateError(property, compareSource, compareOperator), invocationTypes)
+		{
+			this.CompareSource = compareSource;
+			this.CompareOperator = compareOperator;
+			InitializePredicates(compareSource);
+			ValidateRuleCriteria();
+		}
 
 		/// <summary>
 		/// Creates a new instance of <see cref="CompareRule"/> for the specified property.
@@ -71,34 +76,12 @@ namespace ExoRule.Validation
 		/// <param name="error"></param>
 		/// <param name="invocationTypes"></param>
 		public CompareRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes, GetPredicates(rootType, property, compareSource))
+			: base(rootType, property, error, invocationTypes)
 		{
-			// Get the model property from the base class
-			ModelProperty p = Property;
-
-			// Verify that the target property is supported by the rule
-			if (p is ModelReferenceProperty)
-			{
-				if (p.IsList)
-					throw new ArgumentException("The CompareRule does not support comparing list properties.");
-
-				if (compareOperator != CompareOperator.Equal && compareOperator != CompareOperator.NotEqual)
-					throw new ArgumentException("The CompareRule only supports the Equal and NotEqual operators for reference properties.");
-			}
-			else
-			{
-				var propertyType = ((ModelValueProperty)p).PropertyType;
-
-				// If Nullable<T> check the underlying type
-				if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-					propertyType = Nullable.GetUnderlyingType(propertyType);
-
-				if (!typeof(IComparable).IsAssignableFrom(propertyType))
-					throw new ArgumentException("The CompareRule only supports value properties that implement IComparable.");
-			}
-
 			this.CompareSource = compareSource;
 			this.CompareOperator = compareOperator;
+			InitializePredicates(compareSource);
+			ValidateRuleCriteria();
 		}
 
 		#endregion
@@ -133,54 +116,77 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, string compareSource, CompareOperator compareOperator)
+		void ValidateRuleCriteria()
 		{
-			// Determine the appropriate error message
-			string message;
-			var rootModelType = ModelContext.Current.GetModelType(rootType);
-			var p = rootModelType.Properties[property];
-			bool isDate = p is ModelValueProperty && ((ModelValueProperty)p).PropertyType == typeof(DateTime);
-			switch (compareOperator)
+			Initialize += (s, e) =>
 			{
-				case CompareOperator.Equal:
-					message = "compare-equal";
-					break;
-				case CompareOperator.NotEqual:
-					message = "compare-not-equal";
-					break;
-				case CompareOperator.GreaterThan:
-					message = isDate ? "compare-after" : "compare-greater-than";
-					break;
-				case CompareOperator.GreaterThanEqual:
-					message = isDate ? "compare-on-or-after" : "compare-greater-than-or-equal";
-					break;
-				case CompareOperator.LessThan:
-					message = isDate ? "compare-before" : "compare-less-than";
-					break;
-				case CompareOperator.LessThanEqual:
-					message = isDate ? "compare-on-or-before" : "compare-less-than-or-equal";
-					break;
-				default:
-					throw new ArgumentException("Invalid comparison operator for compare rule");
-			}
+				// Get the model property from the base class
+				ModelProperty p = Property;
 
-			// Get the comparison source
-			var source = new ModelSource(rootModelType, compareSource);
-			var sourceType = source.SourceType;
-			var sourceProperty = source.SourceProperty;
+				// Verify that the target property is supported by the rule
+				if (p is ModelReferenceProperty)
+				{
+					if (p.IsList)
+						throw new ArgumentException("The CompareRule does not support comparing list properties.");
 
-			// Create and return the error
-			return new Error(
-				GetErrorCode(rootType, property, "Compare"), message, typeof(CompareRule),
-				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
-					.Replace("{compareSource}", GetLabel(sourceType, sourceProperty)));
+					if (CompareOperator != CompareOperator.Equal && CompareOperator != CompareOperator.NotEqual)
+						throw new ArgumentException("The CompareRule only supports the Equal and NotEqual operators for reference properties.");
+				}
+				else
+				{
+					var propertyType = ((ModelValueProperty)p).PropertyType;
+
+					// If Nullable<T> check the underlying type
+					if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+						propertyType = Nullable.GetUnderlyingType(propertyType);
+
+					if (!typeof(IComparable).IsAssignableFrom(propertyType))
+						throw new ArgumentException("The CompareRule only supports value properties that implement IComparable.");
+				}
+			};
 		}
 
-		internal static string[] GetPredicates(string rootType, string property, string compareSource)
+		static Func<ModelType, ConditionType> CreateError(string property, string compareSource, CompareOperator compareOperator)
 		{
-			ModelSource source = new ModelSource(ModelContext.Current.GetModelType(rootType), compareSource);
-			return source.IsStatic ? new string[] { property } : new string[] { property, compareSource };
+			return (ModelType rootType) =>
+			{
+				// Determine the appropriate error message
+				string message;
+				var p = rootType.Properties[property];
+				bool isDate = p is ModelValueProperty && ((ModelValueProperty)p).PropertyType == typeof(DateTime);
+				switch (compareOperator)
+				{
+					case CompareOperator.Equal:
+						message = "compare-equal";
+						break;
+					case CompareOperator.NotEqual:
+						message = "compare-not-equal";
+						break;
+					case CompareOperator.GreaterThan:
+						message = isDate ? "compare-after" : "compare-greater-than";
+						break;
+					case CompareOperator.GreaterThanEqual:
+						message = isDate ? "compare-on-or-after" : "compare-greater-than-or-equal";
+						break;
+					case CompareOperator.LessThan:
+						message = isDate ? "compare-before" : "compare-less-than";
+						break;
+					case CompareOperator.LessThanEqual:
+						message = isDate ? "compare-on-or-before" : "compare-less-than-or-equal";
+						break;
+					default:
+						throw new ArgumentException("Invalid comparison operator for compare rule");
+				}
+
+				// Create and return the error
+				var label = GetLabel(rootType, property);
+				var sourceLabel = GetSourceLabel(rootType, compareSource);
+				return new Error(
+					GetErrorCode(rootType.Name, property, "Compare"), message, typeof(CompareRule),
+					(s) => s
+						.Replace("{property}", label)
+						.Replace("{compareSource}", sourceLabel));
+			};
 		}
 
 		/// <summary>

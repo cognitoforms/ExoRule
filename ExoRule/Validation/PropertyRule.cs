@@ -18,6 +18,7 @@ namespace ExoRule.Validation
 		#region Fields
 
 		string property;
+		Func<ModelType, ConditionType> conditionType;
 
 		#endregion
 
@@ -45,7 +46,39 @@ namespace ExoRule.Validation
 		{
 			this.property = property;
 			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+		}
 
+		/// <summary>
+		/// Creates a new <see cref="PropertyRule"/> for the specified property and condition type.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="property"></param>
+		/// <param name="conditionType"></param>
+		/// <param name="invocationTypes"></param>
+		/// <param name="predicates"></param>
+		public PropertyRule(string rootType, string property, Func<ModelType, ConditionType> conditionType, RuleInvocationType invocationTypes, params string[] predicates)
+			: base(rootType, rootType + "." + property, invocationTypes, predicates)
+		{
+			this.property = property;
+			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+
+			if (conditionType != null)
+			Initialize += (s, e) => 
+			{
+				// Make sure the condition type and rule have a unique name
+				var type = RootType;
+				var error = conditionType(type);
+				var originalCode = error.Code;
+				var uniqueCode = originalCode;
+				int count = 1;
+				while (ConditionType.GetConditionTypes(type).Any(ct => ct.Code == uniqueCode))
+					uniqueCode = originalCode + count++;
+				error.Code = uniqueCode;
+				Name = uniqueCode;
+
+				// Assign the condition type to the rule
+				ConditionTypes = new ConditionType[] { error };
+			};
 		}
 
 		#endregion
@@ -77,19 +110,36 @@ namespace ExoRule.Validation
 		#region Methods
 
 		/// <summary>
-		/// Generates a unique error code for the current rule;
+		/// Initializes predicates for the specified property rule which leverages a comparison property.
+		/// </summary>
+		/// <param name="rule"></param>
+		/// <param name="compareSource"></param>
+		protected void InitializePredicates(params string[] paths)
+		{
+			if (paths == null || paths.Length == 0)
+				Predicates = new string[] { this.property };
+			else
+				Initialize += (s, e) =>
+				{	
+					var rootType = RootType;
+					Predicates = paths
+						.Select(path => new ModelSource(rootType, path))
+						.Where(source => !source.IsStatic)
+						.Select(source => source.Path)
+						.Union(new string[] { this.property })
+						.ToArray();
+				};
+		}
+
+		/// <summary>
+		/// Generates a unique error code for a property-specific rule.
 		/// </summary>
 		/// <param name="rootType"></param>
 		/// <param name="property"></param>
 		/// <returns></returns>
 		protected static string GetErrorCode(string rootType, string property, string rule)
 		{
-			string code = String.Format("{0}.{1}.{2}", rootType, property, rule);
-			int count = 1;
-			ConditionType ct = code;
-			while (ct != null)
-				ct = code = String.Format("{0}.{1}.{2}", rootType, property, rule) + count++;
-			return code;
+			return String.Format("{0}.{1}.{2}", rootType, property, rule);
 		}
 
 		/// <summary>
@@ -97,9 +147,23 @@ namespace ExoRule.Validation
 		/// </summary>
 		/// <param name="rootType"></param>
 		/// <param name="property"></param>
-		protected static string GetLabel(string rootType, string property)
+		protected static string GetLabel(ModelType rootType, string property)
 		{
-			return ModelContext.Current.GetModelType(rootType).Properties[property].Label;
+			return rootType.Properties[property].Label;
+		}
+
+		/// <summary>
+		/// Gets the label for the specified source property path.
+		/// </summary>
+		/// <param name="rootType"></param>
+		/// <param name="source"></param>
+		/// <returns></returns>
+		protected static string GetSourceLabel(ModelType rootType, string source)
+		{
+			ModelSource s;
+			ModelProperty sourceProperty;
+			ModelSource.TryGetSource(rootType, source, out s, out sourceProperty);
+			return sourceProperty.Label;
 		}
 
 		/// <summary>
@@ -109,9 +173,9 @@ namespace ExoRule.Validation
 		/// <param name="property"></param>
 		/// <param name="value"></param>
 		/// <returns></returns>
-		protected static string Format(string rootType, string property, object value)
+		protected static string Format(ModelType rootType, string property, object value)
 		{
-			return ((ModelValueProperty)ModelContext.Current.GetModelType(rootType).Properties[property]).FormatValue(value);
+			return ((ModelValueProperty)rootType.Properties[property]).FormatValue(value);
 		}
 
 		protected internal override void OnInvoke(ModelInstance root, ModelEvent modelEvent)

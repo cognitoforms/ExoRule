@@ -19,7 +19,7 @@ namespace ExoRule.Validation
 		#region Constructors
 
 		public RequiredRule(string rootType, string property, params ConditionTypeSet[] sets)
-			: this(rootType, property, CreateError(rootType, property, sets))
+			: base(rootType, property, CreateError(property, sets), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{ }
 
 		public RequiredRule(string rootType, string property, string errorMessage, params ConditionTypeSet[] sets)
@@ -27,7 +27,7 @@ namespace ExoRule.Validation
 		{ }		
 		
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
-			: this(rootType, property, invocationTypes, CreateError(rootType, property, sets))
+			: base(rootType, property, CreateError(property, sets), invocationTypes, property)
 		{ }
 
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, string errorMessage, params ConditionTypeSet[] sets)
@@ -46,11 +46,14 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Error CreateError(string rootType, string property, params ConditionTypeSet[] sets)
+		static Func<ModelType, ConditionType> CreateError(string property, params ConditionTypeSet[] sets)
 		{
-			return new Error(
-				GetErrorCode(rootType, property, "Required"),
-				"required",	typeof(RequiredRule), (s) => s.Replace("{property}", ModelContext.Current.GetModelType(rootType).Properties[property].Label), sets);
+			return (ModelType rootType) =>
+			{
+				var label = rootType.Properties[property].Label;
+				return new Error(GetErrorCode(rootType.Name, property, "Required"),	"required", typeof(RequiredRule), 
+					(s) => s.Replace("{property}", label), sets);
+			};
 		}
 
 		/// <summary>
