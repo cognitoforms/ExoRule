@@ -98,7 +98,7 @@ namespace ExoRule
 		/// <summary>
 		/// Gets or sets the execution location governing where the rule will run: server (default) and/or client.
 		/// </summary>
-		public RuleExecutionLocation ExecutionLocation { get; protected set; }
+		public RuleExecutionLocation ExecutionLocation { get; set; }
 
 		/// <summary>
 		/// Gets the set of predicate paths that trigger property change invocations.
