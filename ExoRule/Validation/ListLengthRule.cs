@@ -177,7 +177,7 @@ namespace ExoRule.Validation
 			//now see if the rule is using a static length or the compare property
 			if (CompareSource == null)
 				lengthToCompareAgainst = CompareValue;
-			else
+			else if(compareSource != null)
 			{
 				object compareVal = compareSource.GetValue(root);
 				bool success = Int32.TryParse(compareVal + "", out lengthToCompareAgainst);
