@@ -64,6 +64,17 @@ namespace ExoRule.Validation
 			InitializeSource(null, source);
 		}
 
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, bool ignoreValidation)
+			: this(rootType, property, source, RuleInvocationType.PropertyChanged, ignoreValidation)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, RuleInvocationType invocationTypes, bool ignoreValidation)
+			: base(rootType, property, CreateError(property), invocationTypes)
+		{
+			InitializeSource(null, source);
+			this.IgnoreValidation = ignoreValidation;
+		}
+
 		#endregion
 
 		#region Properties
@@ -88,6 +99,8 @@ namespace ExoRule.Validation
 					sourceType != null ? RootType.GetExpression(sourceType, Source) : null;
 			}
 		}
+
+		public bool IgnoreValidation { get; private set; }
 
 		#endregion
 
