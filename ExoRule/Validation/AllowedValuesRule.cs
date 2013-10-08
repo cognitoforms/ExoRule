@@ -24,55 +24,48 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public AllowedValuesRule(string rootType, string property, string source)
-			: this(rootType, property, source, RuleInvocationType.PropertyChanged)
-		{ }
-
-		public AllowedValuesRule(string rootType, string property, string source, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(property), invocationTypes)
-		{
-			InitializeSource(source, null);
-		}
-
-		public AllowedValuesRule(string rootType, string property, string source, string errorMessage)
-			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged)
-		{ }
-
-		public AllowedValuesRule(string rootType, string property, string source, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
-		{
-			InitializeSource(source, null);
-		}
-
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source)
-			: this(rootType, property, source, RuleInvocationType.PropertyChanged)
-		{ }
-
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(property), invocationTypes)
-		{
-			InitializeSource(null, source);
-		}
-
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source, string errorMessage)
-			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged)
-		{ }
-
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes)
-		{
-			InitializeSource(null, source);
-		}
-
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source, bool ignoreValidation)
+		public AllowedValuesRule(string rootType, string property, string source, bool ignoreValidation = false)
 			: this(rootType, property, source, RuleInvocationType.PropertyChanged, ignoreValidation)
 		{ }
 
-		public AllowedValuesRule(string rootType, string property, LambdaExpression source, RuleInvocationType invocationTypes, bool ignoreValidation)
+		public AllowedValuesRule(string rootType, string property, string source, RuleInvocationType invocationTypes, bool ignoreValidation = false)
 			: base(rootType, property, CreateError(property), invocationTypes)
 		{
-			InitializeSource(null, source);
 			this.IgnoreValidation = ignoreValidation;
+			InitializeSource(source, null);
+		}
+
+		public AllowedValuesRule(string rootType, string property, string source, string errorMessage, bool ignoreValidation = false)
+			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged, ignoreValidation)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, string source, Error error, RuleInvocationType invocationTypes, bool ignoreValidation = false)
+			: base(rootType, property, error, invocationTypes)
+		{
+			this.IgnoreValidation = ignoreValidation;
+			InitializeSource(source, null);
+		}
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, bool ignoreValidation = false)
+			: this(rootType, property, source, RuleInvocationType.PropertyChanged, ignoreValidation)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, RuleInvocationType invocationTypes, bool ignoreValidation = false)
+			: base(rootType, property, CreateError(property), invocationTypes)
+		{
+			this.IgnoreValidation = ignoreValidation;
+			InitializeSource(null, source);
+		}
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, string errorMessage, bool ignoreValidation = false)
+			: this(rootType, property, source, new Error(GetErrorCode(rootType, property, "AllowedValues"), errorMessage, null), RuleInvocationType.PropertyChanged, ignoreValidation)
+		{ }
+
+		public AllowedValuesRule(string rootType, string property, LambdaExpression source, Error error, RuleInvocationType invocationTypes, bool ignoreValidation = false)
+			: base(rootType, property, error, invocationTypes)
+		{
+			this.IgnoreValidation = ignoreValidation;
+			InitializeSource(null, source);
 		}
 
 		#endregion
