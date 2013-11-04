@@ -385,11 +385,12 @@ namespace ExoRule
 							var manager = e.Instance.GetExtension<RuleManager>();
 
 							// Mark the rule state as requiring invocation
-							manager.SetPendingInvocation(this, true);
-
-							// Raise property change notifications
-							foreach (var property in ReturnValues)
-								e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+							if (manager.SetPendingInvocation(this, true))
+							{
+								// Raise property change notifications
+								foreach (var property in ReturnValues)
+									e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+							}
 						}
 					};
 				}
@@ -410,11 +411,8 @@ namespace ExoRule
 							var manager = e.Instance.GetExtension<RuleManager>();
 
 							// Register the rule to run if it is not already registered
-							if (!manager.IsPendingInvocation(this))
+							if (manager.SetPendingInvocation(this, true))
 							{
-								// Mark the rule state as requiring invocation
-								manager.SetPendingInvocation(this, true);
-
 								// Invoke the rule when the last model event scope exits
 								ModelEventScope.OnExit(() =>
 								{

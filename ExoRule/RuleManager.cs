@@ -37,12 +37,12 @@ namespace ExoRule
 			return pendingInvocation.Contains(rule);
 		}
 
-		internal void SetPendingInvocation(Rule rule, bool isPending)
+		internal bool SetPendingInvocation(Rule rule, bool isPending)
 		{
 			if (isPending)
-				pendingInvocation.Add(rule);
+				return pendingInvocation.Add(rule);
 			else
-				pendingInvocation.Remove(rule);
+				return pendingInvocation.Remove(rule);
 		}
 
 		internal IEnumerable<Condition> GetConditions()
