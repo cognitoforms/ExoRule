@@ -325,7 +325,7 @@ namespace ExoRule
 			foreach (var conditionType in ConditionTypes)
 			{
 				if (conditionTypes.Contains(conditionType))
-					throw new InvalidOperationException("Registered condition types must be unique for each model type.");
+					throw new InvalidOperationException("Registered condition types must be unique for each model type: " + conditionType.Code);
 				conditionTypes.Add(conditionType);
 			}
 
