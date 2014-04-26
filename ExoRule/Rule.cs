@@ -137,7 +137,7 @@ namespace ExoRule
 
 		#region Methods
 
-		protected void SetPredicates(string[] predicates)
+		protected void SetPredicates(params string[] predicates)
 		{
 			this.Predicates = predicates
 					.Where(predicate => !predicate.StartsWith("return "))

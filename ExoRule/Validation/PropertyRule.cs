@@ -18,7 +18,6 @@ namespace ExoRule.Validation
 		#region Fields
 
 		string property;
-		Func<ModelType, ConditionType> conditionType;
 
 		#endregion
 

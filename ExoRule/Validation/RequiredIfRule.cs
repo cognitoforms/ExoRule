@@ -15,6 +15,7 @@ namespace ExoRule.Validation
 		#region Fields
 
 		ModelSource compareSource;
+		string expression;
 
 		#endregion
 
@@ -46,9 +47,38 @@ namespace ExoRule.Validation
 			this.CompareValue = compareValue;
 			InitializePredicates(compareSource);
 		}
+
+		public RequiredIfRule(string rootType, string property, string expression, params ConditionTypeSet[] sets)
+			: base(rootType, property, CreateError(property, sets:sets), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		{
+			this.expression = expression;
+
+			Initialize += (s, e) =>
+			{
+				if (RequiredExpression != null)
+				{
+					Path = RequiredExpression.Path.Path;
+					SetPredicates(property, Path);
+				}
+			};
+		}
+
 		#endregion
 
 		#region Properties
+
+		/// <summary>
+		/// Gets the <see cref="ModelExpression"/> to handle the validation.
+		/// </summary>
+		public ModelExpression RequiredExpression
+		{
+			get
+			{
+				return expression != null ? RootType.GetExpression<bool>(expression.StartsWith("=") ? expression.Substring(1) : expression) : null;
+			}
+		}
+
+		public string Path { get; private set; }
 
 		/// <summary>
 		/// Gets the path to the comparison property.
@@ -57,7 +87,7 @@ namespace ExoRule.Validation
 		{
 			get
 			{
-				return compareSource.Path;
+				return compareSource == null ? null : compareSource.Path;
 			}
 			private set
 			{
@@ -98,55 +128,64 @@ namespace ExoRule.Validation
 
 		#region Methods
 
-		static Func<ModelType, ConditionType> CreateError(string property, string compareSource, CompareOperator compareOperator, object compareValue, params ConditionTypeSet[] sets)
+		static Func<ModelType, ConditionType> CreateError(string property, string compareSource = null, CompareOperator compareOperator = CompareOperator.Equal, object compareValue = null, params ConditionTypeSet[] sets)
 		{
 			return (ModelType rootType) =>
 			{
 				// Determine the appropriate error message
-				string message;
-				if (compareValue == null)
-					message = compareOperator == CompareOperator.Equal ? "required-if-not-exists" : "required-if-exists";
+				// If compareSource is null then a ModelExpression has been specified to handle the validation
+				if (compareSource == null)
+				{
+					return new Error(GetErrorCode(rootType.Name, property, "RequiredIf"), "required", typeof(RequiredIfRule),
+						(s) => s
+							.Replace("{property}", GetLabel(rootType, property)), sets);
+				}
 				else
 				{
-					bool isDate = compareValue is DateTime;
-					switch (compareOperator)
+					string message;
+					if (compareValue == null)
+						message = compareOperator == CompareOperator.Equal ? "required-if-not-exists" : "required-if-exists";
+					else
 					{
-						case CompareOperator.Equal: 
-							message = "required-if-equal"; 
-							break;
-						case CompareOperator.NotEqual: 
-							message = "required-if-not-equal"; 
-							break;
-						case CompareOperator.GreaterThan:
-							message = isDate ? "required-if-after" : "required-if-greater-than"; 
-							break;
-						case CompareOperator.GreaterThanEqual:
-							message = isDate ? "required-if-on-or-after": "required-if-greater-than-or-equal";
-							break;
-						case CompareOperator.LessThan:
-							message = isDate ? "required-if-before" : "required-if-less-than";
-							break;
-						case CompareOperator.LessThanEqual:
-							message = isDate ? "required-if-on-or-before" : "required-if-less-than-or-equal";
-							break;
-						default:
-							throw new ArgumentException("Invalid comparison operator for required if rule");
+						bool isDate = compareValue is DateTime;
+						switch (compareOperator)
+						{
+							case CompareOperator.Equal:
+								message = "required-if-equal";
+								break;
+							case CompareOperator.NotEqual:
+								message = "required-if-not-equal";
+								break;
+							case CompareOperator.GreaterThan:
+								message = isDate ? "required-if-after" : "required-if-greater-than";
+								break;
+							case CompareOperator.GreaterThanEqual:
+								message = isDate ? "required-if-on-or-after" : "required-if-greater-than-or-equal";
+								break;
+							case CompareOperator.LessThan:
+								message = isDate ? "required-if-before" : "required-if-less-than";
+								break;
+							case CompareOperator.LessThanEqual:
+								message = isDate ? "required-if-on-or-before" : "required-if-less-than-or-equal";
+								break;
+							default:
+								throw new ArgumentException("Invalid comparison operator for required if rule");
+						}
 					}
+
+					// Get the comparison source
+					ModelSource source;
+					ModelProperty sourceProperty;
+					ModelSource.TryGetSource(rootType, compareSource, out source, out sourceProperty);
+
+					// Create and return the error
+					var compareValueFormatted = compareValue == null ? "" : ((ModelValueProperty)sourceProperty).FormatValue(compareValue);
+					return new Error(GetErrorCode(rootType.Name, property, "RequiredIf"), message, typeof(RequiredIfRule),
+						(s) => s
+							.Replace("{property}", GetLabel(rootType, property))
+							.Replace("{compareSource}", GetSourceLabel(rootType, compareSource))
+							.Replace("{compareValue}", compareValueFormatted), sets);
 				}
-
-				// Get the comparison source
-				ModelSource source;
-				ModelProperty sourceProperty;
-				ModelSource.TryGetSource(rootType, compareSource, out source, out sourceProperty);
-
-				// Create and return the error
-				var label = rootType.Properties[property].Label;
-				var compareValueFormatted = compareValue == null ? "" : ((ModelValueProperty)sourceProperty).FormatValue(compareValue);
-				return new Error(GetErrorCode(rootType.Name, property, "RequiredIf"), message, typeof(RequiredIfRule),
-					(s) => s
-						.Replace("{property}", GetLabel(rootType, property))
-						.Replace("{compareSource}", label)
-						.Replace("{compareValue}", compareValueFormatted), sets);
 			};
 		}
 
@@ -157,8 +196,11 @@ namespace ExoRule.Validation
 				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count > 0))
 				return false;
 
+			// Invoke the ModelExpression if it exists
+			if (RequiredExpression != null)
+				return (bool)RequiredExpression.Invoke(root);
 			// If the value to compare is null, then evaluate whether the compare source has a value
-			if (CompareValue == null)
+			else if (CompareValue == null)
 				return CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root);
 
 			// Otherwise, perform a comparison of the compare source relative to the compare value
