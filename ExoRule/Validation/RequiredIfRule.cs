@@ -198,7 +198,16 @@ namespace ExoRule.Validation
 
 			// Invoke the ModelExpression if it exists
 			if (RequiredExpression != null)
-				return (bool)RequiredExpression.Invoke(root);
+			{
+				try
+				{
+					return (bool)RequiredExpression.Invoke(root);
+				}
+				catch
+				{
+					return false;
+				}
+			}
 			// If the value to compare is null, then evaluate whether the compare source has a value
 			else if (CompareValue == null)
 				return CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root);
