@@ -32,6 +32,13 @@ namespace ExoRule.Validation
 			ConditionType.MapResources(propertyRuleType.Assembly.GetTypes().Where(t => t.IsSubclassOf(propertyRuleType)), propertyRuleType);
 		}
 
+		protected PropertyRule(string rootType, string property, RuleInvocationType invocationTypes, params string[] predicates)
+			: base(rootType, property, predicates)
+		{
+			this.property = property;
+			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+		}
+
 		/// <summary>
 		/// Creates a new <see cref="PropertyRule"/> for the specified property and condition type.
 		/// </summary>
