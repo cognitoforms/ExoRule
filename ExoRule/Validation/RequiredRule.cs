@@ -22,25 +22,61 @@ namespace ExoRule.Validation
 			: base(rootType, property, CreateError(property, sets), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{ }
 
+		public RequiredRule(string rootType, string property, object requiredValue, params ConditionTypeSet[] sets)
+			: base(rootType, property, CreateError(property, sets), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredRule(string rootType, string property, string errorMessage, params ConditionTypeSet[] sets)
 			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
-		{ }		
+		{ }
+
+		public RequiredRule(string rootType, string property, object requiredValue, string errorMessage, params ConditionTypeSet[] sets)
+			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
+		{
+			RequiredValue = requiredValue;
+		}
 		
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
 			: base(rootType, property, CreateError(property, sets), invocationTypes, property)
 		{ }
 
+		public RequiredRule(string rootType, string property, object requiredValue, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+			: base(rootType, property, CreateError(property, sets), invocationTypes, property)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, string errorMessage, params ConditionTypeSet[] sets)
 			: this(rootType, property, invocationTypes, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
 		{ }
+
+		public RequiredRule(string rootType, string property, object requiredValue, RuleInvocationType invocationTypes, string errorMessage, params ConditionTypeSet[] sets)
+			: this(rootType, property, invocationTypes, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
+		{
+			RequiredValue = requiredValue;
+		}
 
 		public RequiredRule(string rootType, string property, Error error)
 			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, error)
 		{ }
 
+		public RequiredRule(string rootType, string property, Error error, object requiredValue)
+			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, error)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error)
 			: base(rootType, property, error, invocationTypes, property)
 		{ }
+
+		#endregion
+
+		#region Properties
+
+		public object RequiredValue { get; private set; }
 
 		#endregion
 
@@ -63,9 +99,12 @@ namespace ExoRule.Validation
 		/// <returns>A boolean value indicating whether the state of the given <see cref="ModelInstance"/> violates the rule.</returns>
 		protected override bool ConditionApplies(ModelInstance root)
 		{
-			return 
-				root[Property] == null || 
-				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count == 0);
+			if (RequiredValue != null)
+				return root[Property] == null || !root[Property].Equals(RequiredValue);
+			else
+				return 
+					root[Property] == null || 
+					(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count == 0);
 		}
 
 		#endregion

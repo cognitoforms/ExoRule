@@ -25,6 +25,12 @@ namespace ExoRule.Validation
 			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, sets)
 		{ }
 
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, object requiredValue, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, sets)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error)
 			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, error)
 		{ }
@@ -61,6 +67,12 @@ namespace ExoRule.Validation
 					SetPredicates(property, Path);
 				}
 			};
+		}
+
+		public RequiredIfRule(string rootType, string property, string expression, object requiredValue, params ConditionTypeSet[] sets)
+			: this(rootType, property, expression, sets)
+		{
+			RequiredValue = requiredValue;
 		}
 
 		#endregion
@@ -123,6 +135,8 @@ namespace ExoRule.Validation
 			get;
 			private set;
 		}
+
+		public object RequiredValue { get; private set; }
 
 		#endregion
 
@@ -191,17 +205,22 @@ namespace ExoRule.Validation
 
 		protected override bool ConditionApplies(ModelInstance root)
 		{
+			var value = root[Property];
+
 			// Exit immediately if the target property has a value
-			if (root[Property] != null ||
-				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count > 0))
+			if (RequiredValue == null && (value != null ||
+				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count > 0)))
 				return false;
+
+			// If the required value is specified then the value must equal the required value
+			var requiredValueCondition = RequiredValue == null || !RequiredValue.Equals(value);
 
 			// Invoke the ModelExpression if it exists
 			if (RequiredExpression != null)
 			{
 				try
 				{
-					return (bool)RequiredExpression.Invoke(root);
+					return (bool)RequiredExpression.Invoke(root) && requiredValueCondition;
 				}
 				catch
 				{
@@ -210,11 +229,11 @@ namespace ExoRule.Validation
 			}
 			// If the value to compare is null, then evaluate whether the compare source has a value
 			else if (CompareValue == null)
-				return CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root);
+				return (CompareOperator == CompareOperator.Equal ? !compareSource.HasValue(root) : compareSource.HasValue(root)) && requiredValueCondition;
 
 			// Otherwise, perform a comparison of the compare source relative to the compare value
 			bool? result = CompareRule.Compare(compareSource.GetValue(root), CompareOperator, CompareValue);
-			return result.HasValue && result.Value;
+			return result.HasValue && result.Value && requiredValueCondition;
 		}
 
 		#endregion
