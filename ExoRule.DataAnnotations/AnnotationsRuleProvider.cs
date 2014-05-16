@@ -69,11 +69,15 @@ namespace ExoRule.DataAnnotations
 						// Required Attribute
 						foreach (var attr in property.GetAttributes<RequiredAttribute>().Take(1))
 						{
+							object requiredValue = null;
+							if (property is ModelValueProperty && ((ModelValueProperty)property).PropertyType == typeof(bool))
+								requiredValue = true;
+
 							// Use the error message if one is specifed, otherwise use the default bahavior
 							if (string.IsNullOrEmpty(attr.ErrorMessage))
-								rules.Add(new RequiredRule(type.Name, property.Name));
+								rules.Add(new RequiredRule(type.Name, property.Name, requiredValue));
 							else
-								rules.Add(new RequiredRule(type.Name, property.Name, attr.ErrorMessage));
+								rules.Add(new RequiredRule(type.Name, property.Name, attr.ErrorMessage, requiredValue));
 						}
 
 						// String Length Attribute

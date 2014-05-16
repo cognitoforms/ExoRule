@@ -32,7 +32,7 @@ namespace ExoRule.Validation
 			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
 		{ }
 
-		public RequiredRule(string rootType, string property, object requiredValue, string errorMessage, params ConditionTypeSet[] sets)
+		public RequiredRule(string rootType, string property, string errorMessage, object requiredValue, params ConditionTypeSet[] sets)
 			: this(rootType, property, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
 		{
 			RequiredValue = requiredValue;
@@ -42,7 +42,7 @@ namespace ExoRule.Validation
 			: base(rootType, property, CreateError(property, sets), invocationTypes, property)
 		{ }
 
-		public RequiredRule(string rootType, string property, object requiredValue, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
+		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, object requiredValue, params ConditionTypeSet[] sets)
 			: base(rootType, property, CreateError(property, sets), invocationTypes, property)
 		{
 			RequiredValue = requiredValue;
@@ -52,7 +52,7 @@ namespace ExoRule.Validation
 			: this(rootType, property, invocationTypes, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
 		{ }
 
-		public RequiredRule(string rootType, string property, object requiredValue, RuleInvocationType invocationTypes, string errorMessage, params ConditionTypeSet[] sets)
+		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, string errorMessage, object requiredValue, params ConditionTypeSet[] sets)
 			: this(rootType, property, invocationTypes, new Error(GetErrorCode(rootType, property, "Required"), errorMessage, sets))
 		{
 			RequiredValue = requiredValue;
