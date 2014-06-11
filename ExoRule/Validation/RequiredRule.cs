@@ -72,6 +72,12 @@ namespace ExoRule.Validation
 			: base(rootType, property, error, invocationTypes, property)
 		{ }
 
+		public RequiredRule(string rootType, string property, RuleInvocationType invocationTypes, Error error, object requiredValue)
+			: base(rootType, property, error, invocationTypes, property)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		#endregion
 
 		#region Properties

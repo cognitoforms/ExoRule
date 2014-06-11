@@ -35,6 +35,12 @@ namespace ExoRule.Validation
 			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, error)
 		{ }
 
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, Error error, object requiredValue)
+			: this(rootType, property, compareSource, compareOperator, compareValue, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, error)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, params ConditionTypeSet[] sets)
 			: base(rootType, property,
 				CreateError(property, compareSource, compareOperator, compareValue, sets), invocationTypes)
@@ -45,6 +51,12 @@ namespace ExoRule.Validation
 			InitializePredicates(compareSource);
 		}
 
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, object requiredValue, params ConditionTypeSet[] sets)
+			: this(rootType, property, compareSource, compareOperator, compareValue, invocationTypes, sets)
+		{
+			RequiredValue = requiredValue;
+		}
+
 		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, Error error)
 			: base(rootType, property, error, invocationTypes)
 		{
@@ -52,6 +64,12 @@ namespace ExoRule.Validation
 			this.CompareOperator = compareOperator;
 			this.CompareValue = compareValue;
 			InitializePredicates(compareSource);
+		}
+
+		public RequiredIfRule(string rootType, string property, string compareSource, CompareOperator compareOperator, object compareValue, RuleInvocationType invocationTypes, Error error, object requiredValue)
+			: this(rootType, property, compareSource, compareOperator, compareValue, invocationTypes, error)
+		{
+			RequiredValue = requiredValue;
 		}
 
 		public RequiredIfRule(string rootType, string property, string expression, params ConditionTypeSet[] sets)
