@@ -226,8 +226,8 @@ namespace ExoRule.Validation
 			var value = root[Property];
 
 			// Exit immediately if the target property has a value
-			if (RequiredValue == null && (value != null ||
-				(Property is ModelReferenceProperty && Property.IsList && root.GetList((ModelReferenceProperty)Property).Count > 0)))
+			if (RequiredValue == null && (value != null &&
+				(!(Property is ModelReferenceProperty) || !Property.IsList || root.GetList((ModelReferenceProperty)Property).Count > 0)))
 				return false;
 
 			// If the required value is specified then the value must equal the required value
