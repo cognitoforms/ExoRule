@@ -104,7 +104,7 @@ namespace ExoRule.Validation
 		{
 			get
 			{
-				return expression != null ? RootType.GetExpression<bool>(expression.StartsWith("=") ? expression.Substring(1) : expression) : null;
+				return expression != null ? RootType.GetExpression<bool>(expression) : null;
 			}
 		}
 
