@@ -15,6 +15,15 @@ namespace ExoRule.Validation
 	/// </summary>
 	public class RangeRule : PropertyRule
 	{
+		#region Fields
+
+		string minExpr;
+		string maxExpr;
+		ModelExpression minExpression;
+		ModelExpression maxExpression;
+
+		#endregion
+
 		#region Constructors
 
 		public RangeRule(string rootType, string property, IComparable minimum, IComparable maximum)
@@ -37,6 +46,21 @@ namespace ExoRule.Validation
 			SetRange(minimum, maximum);
 		}
 
+		public RangeRule(string rootType, string property, string minExpression, string maxExpression, string errorMessage)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, "Range"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
+		{
+			this.minExpr = minExpression;
+			this.maxExpr = maxExpression;
+
+			Initialize += (s, e) => SetRange(MinExpression, MaxExpression);
+		}
+
+		public RangeRule(string rootType, string property, ModelExpression minimum, ModelExpression maximum, string errorMessage)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, "Range"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
+		{
+			SetRange(minimum, maximum);
+		}
+
 		#endregion
 
 		#region Properties
@@ -44,6 +68,30 @@ namespace ExoRule.Validation
 		public IComparable Minimum { get; private set; }
 
 		public IComparable Maximum { get; private set; }
+
+		/// <summary>
+		/// Gets the <see cref="ModelExpression"/> for the minimum valid value.
+		/// </summary>
+		public ModelExpression MinExpression
+		{
+			get
+			{
+				return minExpression ?? (minExpr != null ? RootType.GetExpression<bool>(minExpr) : null);
+			}
+		}
+
+		/// <summary>
+		/// Gets the <see cref="ModelExpression"/> for the maximum valid value.
+		/// </summary>
+		public ModelExpression MaxExpression
+		{
+			get
+			{
+				return maxExpression ?? (maxExpr != null ? RootType.GetExpression<bool>(maxExpr) : null);
+			}
+		}
+
+		public string Path { get; private set; }
 
 		#endregion
 
@@ -68,6 +116,21 @@ namespace ExoRule.Validation
 				if (this.Maximum != null && this.Maximum is IConvertible)
 					this.Maximum = (IComparable)Convert.ChangeType(this.Maximum, propertyType);
 			};
+		}
+
+		void SetRange(ModelExpression minimum, ModelExpression maximum)
+		{
+			this.minExpression = minimum;
+			this.maxExpression = maximum;
+			var minPath = minimum != null ? minimum.Path.Path : "";
+			var maxPath = maximum != null ? maximum.Path.Path : "";
+			if (!string.IsNullOrEmpty(minPath) || !string.IsNullOrEmpty(maxPath))
+			{
+				minPath = minPath.StartsWith("{") ? minPath.Substring(1, minPath.Length - 2) : minPath;
+				maxPath = maxPath.StartsWith("{") ? maxPath.Substring(1, maxPath.Length - 2) : maxPath;
+				Path = "{" + (minPath.Length > 0 && maxPath.Length > 0 ? minPath + "," + maxPath : minPath.Length > 0 ? minPath : maxPath) + "}";
+				SetPredicates(Property.Name, Path);
+			}
 		}
 
 		static Func<ModelType, ConditionType> CreateError(string property, IComparable minimum, IComparable maximum)
