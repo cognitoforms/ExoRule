@@ -438,6 +438,24 @@ namespace ExoRule
 		protected internal virtual void OnRegister()
 		{ }
 
+		public Rule RunOnServer()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.Server;
+			return this;
+		}
+
+		public Rule RunOnClient()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.Client;
+			return this;
+		}
+
+		public Rule RunOnServerAndClient()
+		{
+			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
+			return this;
+		}
+
 		#endregion
 
 		#region IRuleProvider Members
@@ -584,19 +602,19 @@ namespace ExoRule
 			return this;
 		}
 
-		public Rule<TRoot> RunOnServer()
+		public new Rule<TRoot> RunOnServer()
 		{
 			this.ExecutionLocation = RuleExecutionLocation.Server;
 			return this;
 		}
 
-		public Rule<TRoot> RunOnClient()
+		public new Rule<TRoot> RunOnClient()
 		{
 			this.ExecutionLocation = RuleExecutionLocation.Client;
 			return this;
 		}
 
-		public Rule<TRoot> RunOnServerAndClient()
+		public new Rule<TRoot> RunOnServerAndClient()
 		{
 			this.ExecutionLocation = RuleExecutionLocation.ServerAndClient;
 			return this;
