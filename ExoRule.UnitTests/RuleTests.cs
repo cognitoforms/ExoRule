@@ -1,32 +1,32 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using ExoModel.UnitTests.Models;
+using ExoRule.UnitTests.Models.Store;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ExoModel;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Collections.ObjectModel;
-using ExoModel.UnitTest;
 
-namespace ExoRule.UnitTest
+namespace ExoRule.UnitTests
 {
 	[TestClass]
-	public class RuleTest
+	[TestModel(Name = "Store")]
+	public class RuleTests
 	{
-		[ClassInitialize]
-		public static void Initialize(TestContext options)
+		public TestContext TestContext { get; set; }
+
+		[TestInitialize]
+		public void Initialize()
 		{
-			// Initialize the model context to use the test model type provider
-			ModelContext.Init(
-				() => Rule.RegisterRules(Assembly.GetExecutingAssembly()),
-				new TestModelTypeProvider(Assembly.GetExecutingAssembly()));
+			TestModel.Initialize(typeof(RuleTests), TestContext, ctx => Rule.RegisterRules(Assembly.GetExecutingAssembly()));
 		}
 
 		[TestMethod]
 		public void TestCalculateFat()
 		{
-			var milk = new Milk() { Gallons = 0.5m, Percent = 0.02m };
+			var milk = new Milk { Gallons = 0.5m, Percent = 0.02m };
 
 			Assert.AreEqual(0.01m, milk.Fat);
 		}
@@ -34,7 +34,7 @@ namespace ExoRule.UnitTest
 		[TestMethod]
 		public void TestCalculateFatChange()
 		{
-			var milk = new Milk() { Gallons = 0.5m, Percent = 0.02m };
+			var milk = new Milk { Gallons = 0.5m, Percent = 0.02m };
 
 			Assert.AreEqual(0.01m, milk.Fat);
 			milk.Gallons = 1;
@@ -44,12 +44,12 @@ namespace ExoRule.UnitTest
 		[TestMethod]
 		public void TestCalculateMilkFat()
 		{
-			var store = new Store()
+			var store = new Store
 				{
-					Milks = new ObservableCollection<Milk>()
+					Milks = new ObservableCollection<Milk>
 					{
-						new Milk() { Gallons = 0.5m, Percent = 0.02m },
-						new Milk() { Gallons = 1m, Percent = 0.005m }
+						new Milk { Gallons = 0.5m, Percent = 0.02m },
+						new Milk { Gallons = 1m, Percent = 0.005m }
 					}
 				};
 
@@ -59,14 +59,14 @@ namespace ExoRule.UnitTest
 		[TestMethod]
 		public void TestSubTypeFilter()
 		{
-			var store = new Store()
+			var store = new Store
 			{
-				Products = new ObservableCollection<Product>()
+				Products = new ObservableCollection<Product>
 				{
-					new Beer() { Gallons = 0.5m },
-					new Beer() { Gallons = 0.5m },
-					new Milk() { Gallons = 0.5m, Percent = 0.02m },
-					new Milk() { Gallons = 1m, Percent = 0.005m }
+					new Beer { Gallons = 0.5m },
+					new Beer { Gallons = 0.5m },
+					new Milk { Gallons = 0.5m, Percent = 0.02m },
+					new Milk { Gallons = 1m, Percent = 0.005m }
 				}
 			};
 
@@ -74,53 +74,52 @@ namespace ExoRule.UnitTest
 			Assert.AreEqual(1m, store.BeerGallons);
 
 			// Ensure that milk is ignored when counting the total number of instances in the specified filtered graph
-			Assert.AreEqual(3, ModelContext.Current.GetModelType("Store").GetPath("Products<Beer>").GetInstances(ModelContext.Current.GetModelInstance(store)).Count);
+			Assert.AreEqual(3, ModelContext.Current.GetModelType("ExoRule.UnitTests.Models.Store.Store").GetPath("Products<ExoRule.UnitTests.Models.Store.Beer>").GetInstances(ModelContext.Current.GetModelInstance(store)).Count);
 		}
 
 		[TestMethod]
 		public void TestCalculateMilkFatChange()
 		{
-			Console.WriteLine("Start Construct Test Instances");
-			var store = new Store()
+			Console.WriteLine(@"Start Construct Test Instances");
+			var store = new Store
 			{
-				Milks = new List<Milk>()
+				Milks = new List<Milk>
 					{
-						new Milk() { Gallons = 0.5m, Percent = 0.02m },
-						new Milk() { Gallons = 1m, Percent = 0.005m }
+						new Milk { Gallons = 0.5m, Percent = 0.02m },
+						new Milk { Gallons = 1m, Percent = 0.005m }
 					}
 			};
-			Console.WriteLine("Finish Construct Test Instances");
+			Console.WriteLine(@"Finish Construct Test Instances");
 
-			Console.WriteLine("Start First Assert");
+			Console.WriteLine(@"Start First Assert");
 			Assert.AreEqual(0.015m, store.MilkFat);
-			Console.WriteLine("Finish First Assert");
+			Console.WriteLine(@"Finish First Assert");
 
-			Console.WriteLine("Start Property Change");
+			Console.WriteLine(@"Start Property Change");
 			store.Milks.First().Gallons = 1;
-			Console.WriteLine("Finish Property Change");
+			Console.WriteLine(@"Finish Property Change");
 
-			Console.WriteLine("Start Second Assert");
+			Console.WriteLine(@"Start Second Assert");
 			Assert.AreEqual(0.025m, store.MilkFat);
-			Console.WriteLine("Finish Second Assert");
+			Console.WriteLine(@"Finish Second Assert");
 		}
 
 		[TestMethod]
 		public void TestGetPath()
 		{
-			ModelType storeType = ModelContext.Current.GetModelType<Store>();
-
-			var path = storeType.GetPath("{Products{Fat,Gallons},MilkFat,Milks{Percent,Brand,Gallons,Fat}}");
+			var storeModelType = ModelContext.Current.GetModelType<Store>();
+			storeModelType.GetPath("{Products{Fat,Gallons},MilkFat,Milks{Percent,Brand,Gallons,Fat}}");
 		}
 
 		[TestMethod]
 		public void TestClone()
 		{
-			var store = new Store()
+			var store = new Store
 			{
-				Milks = new List<Milk>()
+				Milks = new List<Milk>
 					{
-						new Milk() { Gallons = 0.5m, Percent = 0.02m },
-						new Milk() { Gallons = 1m, Percent = 0.005m }
+						new Milk { Gallons = 0.5m, Percent = 0.02m },
+						new Milk { Gallons = 1m, Percent = 0.005m }
 					}
 			};
 
@@ -157,7 +156,7 @@ namespace ExoRule.UnitTest
 				string propertyName = me.Member.Name;
 				Type propertyType = me.Type;
 
-				Console.WriteLine(propertyName + ": " + propertyType);
+				Console.WriteLine(propertyName + @": " + propertyType);
 
 				me = me.Expression as MemberExpression;
 			}

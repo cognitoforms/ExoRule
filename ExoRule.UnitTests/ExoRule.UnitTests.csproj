@@ -9,8 +9,8 @@
     <ProjectGuid>{94A2A470-2861-4E0A-B052-7D8CF4A95620}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ExoRule.UnitTest</RootNamespace>
-    <AssemblyName>ExoRule.UnitTest</AssemblyName>
+    <RootNamespace>ExoRule.UnitTests</RootNamespace>
+    <AssemblyName>ExoRule.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -49,17 +49,21 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Beer.cs" />
-    <Compile Include="Product.cs" />
-    <Compile Include="Milk.cs" />
+    <Compile Include="Models\Store\Beer.cs" />
+    <Compile Include="Models\Store\Product.cs" />
+    <Compile Include="Models\Store\Milk.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RuleTest.cs" />
-    <Compile Include="Store.cs" />
+    <Compile Include="RuleTests.cs" />
+    <Compile Include="Models\Store\Store.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExoModel\ExoModel.UnitTest\ExoModel.UnitTest.csproj">
-      <Project>{943D65C3-5E48-4771-8BA8-A8494C0FFB32}</Project>
-      <Name>ExoModel.UnitTest</Name>
+    <ProjectReference Include="..\..\ExoModel\ExoModel.Json\ExoModel.Json.csproj">
+      <Project>{67e8a5cd-defb-47c7-9b2e-48a142eec404}</Project>
+      <Name>ExoModel.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ExoModel\ExoModel.UnitTests\ExoModel.UnitTests.csproj">
+      <Project>{943d65c3-5e48-4771-8ba8-a8494c0ffb32}</Project>
+      <Name>ExoModel.UnitTests</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ExoModel\ExoModel\ExoModel.csproj">
       <Project>{F1D92AF4-9E97-4D29-8A24-B3C3011F2A42}</Project>
@@ -71,6 +75,10 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <UsingTask TaskName="Amender" AssemblyFile="$(ProjectDir)\..\..\ExoModel\ExoModel.Json.Amender\Dependencies\Afterthought\Afterthought.Amender.exe" />
+  <Target Name="AfterCompile">
+    <Amender TargetAssembly="@(IntermediateAssembly->'%(FullPath)')" AmendmentAssemblies="$(ProjectDir)\..\..\ExoModel\ExoModel.Json.Amender\Output\ExoModel.Json.Amender.dll" ReferenceAssemblies="@(ReferencePath)" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
