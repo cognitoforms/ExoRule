@@ -18,177 +18,135 @@ namespace ExoRule.Validation
 	{
 		#region Fields
 
-		ModelSource compareSource;
+		string minExpr;
+		string maxExpr;
+		ModelExpression minExpression;
+		ModelExpression maxExpression;
 
 		#endregion
 
 		#region Constructors
 
-		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator)
-			: this(rootType, property, compareValue, compareOperator, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		public ListLengthRule(string rootType, string property, int minimum, int maximum)
+			: this(rootType, property, minimum, maximum, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
 		{ }
 
-		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(property, compareValue, null, compareOperator), invocationTypes)
+		public ListLengthRule(string rootType, string property, int minimum, int maximum, RuleInvocationType invocationTypes)
+			: base(rootType, property, CreateError(property, minimum, maximum), invocationTypes, property)
 		{
-			this.CompareValue = compareValue;
-			this.CompareOperator = compareOperator;
+			this.Minimum = minimum;
+			this.Maximum = maximum;
 		}
 
-		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, string errorMessage)
-			: this(rootType, property, compareValue, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
+		public ListLengthRule(string rootType, string property, int minimum, int maximum, string errorMessage)
+			: this(rootType, property, minimum, maximum, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
 		{ }
 
-		public ListLengthRule(string rootType, string property, int compareValue, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
+		public ListLengthRule(string rootType, string property, int minimum, int maximum, Error error, RuleInvocationType invocationTypes)
 			: base(rootType, property, error, invocationTypes, property)
 		{
-			this.CompareValue = compareValue;
-			this.CompareOperator = compareOperator;
+			this.Minimum = minimum;
+			this.Maximum = maximum;
 		}
 
-		public ListLengthRule(string rootType, string property, int compareValue, string compareSource, CompareOperator compareOperator)
-			: this(rootType, property, compareSource, compareOperator, RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
-		{ }
-
-		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, RuleInvocationType invocationTypes)
-			: base(rootType, property, CreateError(property, 0, compareSource, compareOperator), invocationTypes)
+		public ListLengthRule(string rootType, string property, string minExpression, string maxExpression, string errorMessage)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{
-			this.CompareSource = compareSource;
-			this.CompareOperator = compareOperator;
+			this.minExpr = minExpression;
+			this.maxExpr = maxExpression;
+
+			Initialize += (s, e) => SetRange(property, MinExpression, MaxExpression);
 		}
 
-		public ListLengthRule(string rootType, string property, int compareValue, string compareSource, CompareOperator compareOperator, string errorMessage)
-			: this(rootType, property, compareSource, compareOperator, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged)
-		{ }
-
-		public ListLengthRule(string rootType, string property, string compareSource, CompareOperator compareOperator, Error error, RuleInvocationType invocationTypes)
-			: base(rootType, property, error, invocationTypes, property)
+		public ListLengthRule(string rootType, string property, ModelExpression minimum, ModelExpression maximum, string errorMessage)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, "ListLength"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{
-			this.CompareSource = compareSource;
-			this.CompareOperator = compareOperator;
+			Initialize += (s, e) => SetRange(property, minimum, maximum);
 		}
 
 		#endregion
 
 		#region Properties
 
-		public int CompareValue { get; private set; }
+		public int Minimum { get; private set; }
+
+		public int Maximum { get; private set; }
 
 		/// <summary>
-		/// The static or instance path of the property to compare to.
+		/// Gets the <see cref="ModelExpression"/> for the minimum valid value.
 		/// </summary>
-		public string CompareSource
+		public ModelExpression MinExpression
 		{
 			get
 			{
-				return compareSource == null ? "" : compareSource.Path;
-			}
-			private set
-			{
-				if (!String.IsNullOrEmpty(value))
-					compareSource = new ModelSource(Property.DeclaringType, value);
-				else
-					compareSource = null;
+				return minExpression ?? (minExpr != null ? RootType.GetExpression<bool>(minExpr) : null);
 			}
 		}
 
 		/// <summary>
-		/// The type of comparison to perform.
+		/// Gets the <see cref="ModelExpression"/> for the maximum valid value.
 		/// </summary>
-		public CompareOperator CompareOperator
+		public ModelExpression MaxExpression
 		{
-			get;
-			private set;
+			get
+			{
+				return maxExpression ?? (maxExpr != null ? RootType.GetExpression<bool>(maxExpr) : null);
+			}
 		}
+
+		public string Path { get; private set; }
 
 		#endregion
 
 		#region Methods
 
-		static Func<ModelType, ConditionType> CreateError(string property, int compareValue, string compareSource, CompareOperator op)
+		void SetRange(string property, ModelExpression minimum, ModelExpression maximum)
 		{
-			return (ModelType rootType) =>
+			this.minExpression = minimum;
+			this.maxExpression = maximum;
+			var minPath = minimum != null ? minimum.Path.Path : "";
+			var maxPath = maximum != null ? maximum.Path.Path : "";
+			if (!string.IsNullOrEmpty(minPath) || !string.IsNullOrEmpty(maxPath))
 			{
-				string message;
-				switch (op)
-				{
-					case CompareOperator.Equal:
-						message = "listlength-compare-equal";
-						break;
-					case CompareOperator.NotEqual:
-						message = "listlength-compare-not-equal";
-						break;
-					case CompareOperator.GreaterThan:
-						message = "listlength-compare-greater-than";
-						break;
-					case CompareOperator.GreaterThanEqual:
-						message = "listlength-compare-greater-than-or-equal";
-						break;
-					case CompareOperator.LessThan:
-						message = "listlength-compare-less-than";
-						break;
-					case CompareOperator.LessThanEqual:
-						message = "listlength-compare-less-than-or-equal";
-						break;
-					default:
-						throw new ArgumentException("Invalid comparison operator for list length rule");
-				}
+				minPath = minPath.StartsWith("{") ? minPath.Substring(1, minPath.Length - 2) : minPath;
+				maxPath = maxPath.StartsWith("{") ? maxPath.Substring(1, maxPath.Length - 2) : maxPath;
+				Path = "{" + (minPath.Length > 0 && maxPath.Length > 0 ? minPath + "," + maxPath : minPath.Length > 0 ? minPath : maxPath) + "}";
+				SetPredicates(Property.Name, Path);
+			}
+		}
 
-				// Get the comparison source
-				var label = GetLabel(rootType, property);
-				if (!String.IsNullOrEmpty(compareSource))
-				{
-					var sourceLabel = GetSourceLabel(rootType, compareSource);
-					return new Error(
-						GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
-						(s) => s
-							.Replace("{property}", label)
-							.Replace("{compareSource}", sourceLabel));
-				}
-				else
-				{
-					//there is no compare source and we are using a static length
-					return new Error(
-						GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
-						(s) => s
-							.Replace("{property}", label)
-							.Replace("{compareSource}", compareValue.ToString()));
-				}
-			};
+		static Func<ModelType, ConditionType> CreateError(string property, int minimum, int maximum)
+		{
+			string message;
+			if (minimum > 0 && maximum > 0)
+				message = "listlength-between";
+			else if (minimum > 0)
+				message = "listlength-at-least";
+			else if (maximum > 0)
+				message = "listlength-at-most";
+			else
+				throw new ArgumentException("Either the minimum or maximum values must be specified for a list length rule.");
+
+			return (ModelType rootType) => new Error(
+				GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
+				(s) => s
+					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{min}", minimum.ToString())
+					.Replace("{max}", maximum.ToString()), null);
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)
 		{
-			//if the Property is not a list then this rule cannot apply
-			if (!Property.IsList)
+			int value = root.GetList((ModelReferenceProperty)Property).Count;
+
+			if (Minimum > 0 && Maximum > 0)
+				return Minimum.CompareTo(value) > 0 && Maximum.CompareTo(value) < 0;
+			else if (Minimum > 0)
+				return Minimum.CompareTo(value) > 0;
+			else if (Maximum > 0)
+				return Maximum.CompareTo(value) < 0;
+			else
 				return false;
-
-			//value should be the list you are comparing against
-			object value = root[Property];
-
-			//get the exomodel list representation
-			ModelInstanceList items = root.GetList((ModelReferenceProperty)Property);
-
-			if (value == null)
-				return false;
-
-			int lengthToCompareAgainst = 0;
-
-			//now see if the rule is using a static length or the compare property
-			if (CompareSource == null)
-				lengthToCompareAgainst = CompareValue;
-			else if(compareSource != null)
-			{
-				object compareVal = compareSource.GetValue(root);
-				bool success = Int32.TryParse(compareVal + "", out lengthToCompareAgainst);
-
-				//if it could not parse then this is not a valid integer property
-				if (!success)
-					return false;
-			}
-
-			bool? result = CompareRule.Compare(items.Count, CompareOperator, lengthToCompareAgainst);
-			return !result.HasValue ? false : result.Value;
 		}
 
 		#endregion

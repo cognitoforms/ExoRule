@@ -110,15 +110,15 @@ namespace ExoRule.DataAnnotations
 								rules.Add(new CompareRule(type.Name, property.Name, attr.ComparisonPropertyName, attr.Operator, attr.ErrorMessage));
 						}
 
-						// ListLength Attribute
-						foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
-						{
-							// Use the error message if one is specifed, otherwise use the default bahavior
-							if (string.IsNullOrEmpty(attr.ErrorMessage))
-								rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
-							else 
-								rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp, attr.ErrorMessage));
-						}
+						//// ListLength Attribute
+						//foreach (var attr in property.GetAttributes<ListLengthAttribute>().Take(1))
+						//{
+						//	// Use the error message if one is specifed, otherwise use the default bahavior
+						//	if (string.IsNullOrEmpty(attr.ErrorMessage))
+						//		rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp));
+						//	else 
+						//		rules.Add(new ListLengthRule(type.Name, property.Name, attr.StaticLength, attr.LengthCompareProperty, attr.CompareOp, attr.ErrorMessage));
+						//}
 
                         // Regular Expression Attribute
                         foreach (var attr in property.GetAttributes<RegularExpressionAttribute>().Take(1))
