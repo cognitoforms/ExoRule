@@ -58,7 +58,7 @@ namespace ExoRule.Validation
 		public RangeRule(string rootType, string property, ModelExpression minimum, ModelExpression maximum, string errorMessage)
 			: base(rootType, property, new Error(GetErrorCode(rootType, property, "Range"), errorMessage, null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{
-			SetRange(minimum, maximum);
+			Initialize += (s, e) => SetRange(minimum, maximum);
 		}
 
 		#endregion
