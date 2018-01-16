@@ -164,13 +164,15 @@ namespace ExoRule.Validation
 		{
 			return (ModelType rootType) =>
 			{
+				var label = GetLabel(rootType, property);
+
 				// Determine the appropriate error message
 				// If compareSource is null then a ModelExpression has been specified to handle the validation
 				if (compareSource == null)
 				{
 					return new Error(GetErrorCode(rootType.Name, property, "RequiredIf"), "required", typeof(RequiredIfRule),
 						(s) => s
-							.Replace("{property}", GetLabel(rootType, property)), sets);
+							.Replace("{property}", label), sets);
 				}
 				else
 				{
@@ -214,7 +216,7 @@ namespace ExoRule.Validation
 					var compareValueFormatted = compareValue == null ? "" : ((ModelValueProperty)sourceProperty).FormatValue(compareValue);
 					return new Error(GetErrorCode(rootType.Name, property, "RequiredIf"), message, typeof(RequiredIfRule),
 						(s) => s
-							.Replace("{property}", GetLabel(rootType, property))
+							.Replace("{property}", label)
 							.Replace("{compareSource}", GetSourceLabel(rootType, compareSource))
 							.Replace("{compareValue}", compareValueFormatted), sets);
 				}

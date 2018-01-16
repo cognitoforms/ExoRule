@@ -143,10 +143,13 @@ namespace ExoRule.Validation
 
 		static Func<ModelType, ConditionType> CreateError(string property)
 		{
-			return (ModelType rootType) => new Error(
-				GetErrorCode(rootType.Name, property, "AllowedValues"),
-				"allowed-values", typeof(AllowedValuesRule), 
-				(s) => s.Replace("{property}", GetLabel(rootType, property)), null);
+			return (ModelType rootType) =>
+			{
+				var label = rootType.Properties[property].Label;
+
+				return new Error(GetErrorCode(rootType.Name, property, "AllowedValues"), "allowed-values", typeof(AllowedValuesRule),
+					(s) => s.Replace("{property}", label), null);
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

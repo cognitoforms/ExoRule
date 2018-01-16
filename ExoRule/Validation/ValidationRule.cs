@@ -19,6 +19,7 @@ namespace ExoRule.Validation
 
 		string validationExpr;
 		string errorMessageExpr;
+        bool isResourceErrorMessage;
 		ModelExpression validationExpression;
 		ModelExpression errorMessageExpression;
 
@@ -26,17 +27,29 @@ namespace ExoRule.Validation
 
 		#region Constructors
 
-		public ValidationRule(string rootType, string property, string validationExpression, string errorMessageExpression)
-			: base(rootType, property, new Error(GetErrorCode(rootType, property, "Validation"), "Invalid", null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
+		public ValidationRule(string rootType, string property, string errorName, string validationExpression, string errorMessageExpressionOrResource, bool isResourceErrorMessage = false)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, errorName), "Invalid", null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{
 			this.validationExpr = validationExpression;
-			this.errorMessageExpr = errorMessageExpression;
+            if (isResourceErrorMessage)
+                this.ErrorMessageResource = errorMessageExpressionOrResource;
+            else
+                this.errorMessageExpr = errorMessageExpressionOrResource;
+
+            Initialize += (s, e) => InitializeExpressions();
+		}
+
+		public ValidationRule(string rootType, string property, string errorName, string[] additionalPredicates, ModelExpression validationExpression, ModelExpression errorMessageExpression)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, errorName), "Invalid", null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, new string[] { property }.Concat(additionalPredicates).ToArray())
+		{
+			this.validationExpression = validationExpression;
+			this.errorMessageExpression = errorMessageExpression;
 
 			Initialize += (s, e) => InitializeExpressions();
 		}
 
-		public ValidationRule(string rootType, string property, ModelExpression validationExpression, ModelExpression errorMessageExpression)
-			: base(rootType, property, new Error(GetErrorCode(rootType, property, "Validation"), "Invalid", null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
+		public ValidationRule(string rootType, string property, string errorName, ModelExpression validationExpression, ModelExpression errorMessageExpression)
+			: base(rootType, property, new Error(GetErrorCode(rootType, property, errorName), "Invalid", null), RuleInvocationType.InitNew | RuleInvocationType.PropertyChanged, property)
 		{
 			this.validationExpression = validationExpression;
 			this.errorMessageExpression = errorMessageExpression;
@@ -70,7 +83,11 @@ namespace ExoRule.Validation
 			}
 		}
 
+        public string ErrorMessageResource { get; set; }
+
 		public string Path { get; private set; }
+
+        public string[] AdditionalTargets { get; set; }
 
 		#endregion
 
@@ -79,7 +96,7 @@ namespace ExoRule.Validation
 		void InitializeExpressions()
 		{
 			var validationPath = ValidationExpression.Path.Path;
-			var errorMessagePath = ErrorMessageExpression.Path.Path;
+			var errorMessagePath = (ErrorMessageResource != null ? "" : ErrorMessageExpression.Path.Path);
 			if (!string.IsNullOrEmpty(validationPath) || !string.IsNullOrEmpty(errorMessagePath))
 			{
 				validationPath = validationPath.StartsWith("{") ? validationPath.Substring(1, validationPath.Length - 2) : validationPath;

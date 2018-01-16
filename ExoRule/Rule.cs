@@ -128,7 +128,7 @@ namespace ExoRule
 		/// for the first time, allowing rules to delay one time setup logic.
 		/// </summary>
 		protected internal event EventHandler Initialize;
-	
+
 		public static event EventHandler BeforeInvoke;
 
 		public static event EventHandler AfterInvoke;
@@ -195,7 +195,7 @@ namespace ExoRule
 									.ToList();
 
 								Type currentType = callStackMethods.First().DeclaringType;
-								
+
 								callStackMethods.Reverse();
 								MethodBase ruleProviderCall = callStackMethods.FirstOrDefault(method => currentType != method.DeclaringType && typeof(IRuleProvider).IsAssignableFrom(method.DeclaringType));
 
@@ -373,26 +373,37 @@ namespace ExoRule
 					}
 				};
 
-				// Subscribe to property change notifications for all rule predicates
-				foreach (string predicate in Predicates)
+				if (!InvocationTypes.HasFlag(RuleInvocationType.SuppressPropertyChanged))
 				{
-					RootType.GetPath(predicate).Change += (sender, e) =>
+					// Subscribe to property change notifications for all rule predicates
+					foreach (string predicate in Predicates)
 					{
-						// Only invoke the rule if the instance is of the same type as the rule root type
-						if (RootType.IsInstanceOfType(e.Instance))
+						RootType.GetPath(predicate).Change += (sender, e) =>
 						{
-							// Get the rule manager for the current instance
-							var manager = e.Instance.GetExtension<RuleManager>();
-
-							// Mark the rule state as requiring invocation
-							if (manager.SetPendingInvocation(this, true))
+							// Only invoke the rule if the instance is of the same type as the rule root type
+							if (RootType.IsInstanceOfType(e.Instance))
 							{
-								// Raise property change notifications
-								foreach (var property in ReturnValues)
-									e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+								// Get the rule manager for the current instance
+								var manager = e.Instance.GetExtension<RuleManager>();
+
+								// Mark the rule state as requiring invocation
+								if (manager.SetPendingInvocation(this, true))
+								{
+									// Raise property change notifications
+									foreach (var property in ReturnValues)
+										e.Instance.Type.Properties[property].NotifyPathChange(e.Instance);
+								}
 							}
-						}
-					};
+						};
+					}
+				}
+
+				// Mark the properties as calculated to denote that they are return values of a rule
+				foreach (var property in ReturnValues)
+				{
+					var prop = RootType.Properties[property];
+					if (prop != null)
+						prop.IsCalculated = true;
 				}
 			}
 
@@ -708,7 +719,7 @@ namespace ExoRule
 				this.calculation = calculation;
 
 				// Perform delayed initialization to be able to reference the model type information
-				Initialize += (s, e) => 
+				Initialize += (s, e) =>
 				{
 					var rootType = RootType;
 

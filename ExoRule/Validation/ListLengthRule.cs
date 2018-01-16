@@ -127,12 +127,16 @@ namespace ExoRule.Validation
 			else
 				throw new ArgumentException("Either the minimum or maximum values must be specified for a list length rule.");
 
-			return (ModelType rootType) => new Error(
-				GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
+			return (ModelType rootType) =>
+			{
+				var label = GetLabel(rootType, property);
+
+				return new Error(GetErrorCode(rootType.Name, property, "ListLength"), message, typeof(ListLengthRule),
 				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{property}", label)
 					.Replace("{min}", minimum.ToString())
 					.Replace("{max}", maximum.ToString()), null);
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

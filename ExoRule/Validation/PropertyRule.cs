@@ -29,6 +29,7 @@ namespace ExoRule.Validation
 		static PropertyRule()
 		{
 			var propertyRuleType = typeof(PropertyRule);
+
 			ConditionType.MapResources(propertyRuleType.Assembly.GetTypes().Where(t => t.IsSubclassOf(propertyRuleType)), propertyRuleType);
 		}
 

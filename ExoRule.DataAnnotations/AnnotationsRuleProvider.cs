@@ -122,7 +122,7 @@ namespace ExoRule.DataAnnotations
 
                         // Regular Expression Attribute
                         foreach (var attr in property.GetAttributes<RegularExpressionAttribute>().Take(1))
-							rules.Add(new StringFormatRule(type.Name, property.Name, () => attr.ErrorMessage, () => new Regex(attr.Pattern), () => (attr is RegularExpressionReformatAttribute) ? ((RegularExpressionReformatAttribute)attr).ReformatExpression : null, RuleInvocationType.PropertyChanged));
+							rules.Add(CreateFormatRule(type.Name, property.Name, attr));
                         
                         // Allowed Values Attribute
 						ModelReferenceProperty reference = property as ModelReferenceProperty;
@@ -143,6 +143,11 @@ namespace ExoRule.DataAnnotations
 				}
 			}
 			return rules;
+		}
+
+		private static StringFormatRule CreateFormatRule(string rootType, string property, RegularExpressionAttribute attr)
+		{
+			return new StringFormatRule(rootType, property, () => attr.ErrorMessage, () => new Regex(attr.Pattern), () => (attr is RegularExpressionReformatAttribute) ? ((RegularExpressionReformatAttribute)attr).ReformatExpression : null, RuleInvocationType.PropertyChanged);
 		}
 
 		#endregion

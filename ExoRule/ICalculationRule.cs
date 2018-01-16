@@ -13,4 +13,10 @@ namespace ExoRule
 		/// </summary>
 		LambdaExpression Calculation { get; }
 	}
+
+	public interface IClientCalculationRule : ICalculationRule
+	{
+		string FunctionBody { get; }
+		IDictionary<string, string> Exports { get; set; }
+	}
 }

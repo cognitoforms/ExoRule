@@ -34,6 +34,13 @@ namespace ExoRule.Validation
 			this.reformatExpression = reformatExpression;
 		}
 
+		public StringFormatRule(string rootType, string property, Error error, Func<Regex> formatExpression, Func<string> reformatExpression = null, RuleInvocationType invocationTypes = RuleInvocationType.PropertyChanged)
+			: base(rootType, property, error, invocationTypes, property)
+		{
+			this.formatExpression = formatExpression;
+			this.reformatExpression = reformatExpression;
+		}
+
 		#endregion
 
 		#region Properties
@@ -68,11 +75,15 @@ namespace ExoRule.Validation
 
 		static Func<ModelType, ConditionType> CreateError(string property, Func<string> formatDescription)
 		{
-			return (ModelType rootType) => new Error(
-				GetErrorCode(rootType.Name, property, "StringFormat"), "string-format", typeof(StringFormatRule),
+			return (ModelType rootType) =>
+			{
+				var label = GetLabel(rootType, property);
+
+				return new Error(GetErrorCode(rootType.Name, property, "StringFormat"), "string-format", typeof(StringFormatRule),
 				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{property}", label)
 					.Replace("{formatDescription}", formatDescription()));
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

@@ -147,12 +147,16 @@ namespace ExoRule.Validation
 			else
 				throw new ArgumentException("Either the minimum or maximum values must be specified for a range rule.");
 
-			return (ModelType rootType) => new Error(
-				GetErrorCode(rootType.Name, property, "Range"), message, typeof(RangeRule),
+			return (ModelType rootType) =>
+			{
+				var label = GetLabel(rootType, property);
+
+				return new Error(GetErrorCode(rootType.Name, property, "Range"), message, typeof(RangeRule),
 				(s) => s
-					.Replace("{property}", GetLabel(rootType, property))
+					.Replace("{property}", label)
 					.Replace("{min}", minimum == null ? "" : Format(rootType, property, minimum))
 					.Replace("{max}", maximum == null ? "" : Format(rootType, property, maximum)), null);
+			};
 		}
 
 		protected override bool ConditionApplies(ModelInstance root)

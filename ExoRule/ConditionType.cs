@@ -86,6 +86,8 @@ namespace ExoRule
 
 		public Rule ConditionRule { get; private set; }
 
+		public bool AlwaysSerialize { get; set; }
+
 		#endregion
 
 		#region Methods

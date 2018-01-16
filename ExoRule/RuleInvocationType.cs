@@ -39,6 +39,11 @@ namespace ExoRule
 		/// <summary>
 		/// Occurs when validation is explicitly performed on a new instance.
 		/// </summary>
-		ValidateNew = 64
+		ValidateNew = 64,
+
+		/// <summary>
+		/// Overrides registration of PropertyChanged events for PropertyGet rules
+		/// </summary>
+		SuppressPropertyChanged = 128
 	}
 }
